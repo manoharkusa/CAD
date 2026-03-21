@@ -1,0 +1,26 @@
+# SVN
+.svn/
+
+# Temp files
+*.swp
+*.swo
+*.swn
+*.swm
+*.swl
+*.swk
+.nfs*
+
+# Backup files
+*.bk.*
+*.v1
+*.v2
+*.mani
+*.t
+*.t.*
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc

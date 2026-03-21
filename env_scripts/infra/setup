@@ -1,0 +1,706 @@
+#!/usr/bin/tcsh 
+# setup: Project + domain workspace setup (no user-group checks)
+# - Requires: -proj <name> [-rev <ver>] -domain <ades|design|pd|alayout|verification|dft>
+# - Optional: -block <blk> -exp <Exp> -rtltag <tag>
+#
+# Changes requested:
+#   1) If user provides -exp and the experiment already exists -> ERROR and exit
+#   2) If user does NOT provide -exp (for pd/dft with -block) -> auto-create exp_<timestamp>
+
+# ========== Init ==========
+set projectname  = ""
+set version      = ""
+set domain       = ""
+set block        = ""
+set exp          = ""
+set rtltag       = ""
+set copy_from    = ""
+set to_stage     = ""
+set wa_root      = ""
+set wa           = ""
+set scratch_root = ""
+set created_wa   = 0
+if ( $?WA ) then
+  unsetenv WA  
+endif
+
+# ========== Help / Usage ==========
+set usage = "Usage:\n"
+set usage = "${usage}\tsetup -proj <ProjName> [-rev <version>] -domain <ades|design|pd|alayout|verification|dft> [-block <blk> -exp <Exp> -rtltag <tag>]\n"
+set usage = "${usage}\nNotes:\n"
+set usage = "${usage}\t- adesign, alayout, verification: ignore -exp; no block directory in WA; exports whole domain into user WA.\n"
+set usage = "${usage}\t- design: -block is supported (required for -rtltag); -exp is ignored.\n"
+set usage = "${usage}\t- pd, dft: -block is required for export; -exp creates experiment subdir and PD scaffolding.\n"
+set usage = "${usage}\t- -rtltag (design only for PROJ_RTL_PATH; for pd/dft it prefixes WA with <tag>/).\n"
+set usage = "${usage}\t- --copy-from <exp>: Copy from existing experiment (requires --to-stage).\n"
+set usage = "${usage}\t- --to-stage <stage>: Keep data up to this stage; stages after are emptied for fresh run.\n"
+set usage = "${usage}\t                      Valid stages: init floorplan place cts postcts route postroute chip_finish\n"
+set usage = "${usage}\nExamples:\n"
+set usage = "${usage}\tsetup -proj ganga -domain pd -block rp_top -exp test1\n"
+set usage = "${usage}\tsetup -proj ganga -domain pd -block aes_cipher_top -exp exp_test -rtltag tag2\n"
+set usage = "${usage}\tsetup -proj ganga -domain verification\n"
+set usage = "${usage}\tsetup -proj ganga -domain design -block aes_cipher_top\n"
+set usage = "${usage}\tsetup -proj ganga -domain design -block aes_cipher_top -rtltag tag2\n"
+set usage = "${usage}\tsetup -proj ganga -rev v_4 -domain alayout\n"
+set usage = "${usage}\tsetup -proj ganga -domain pd -block rp_top -exp test2 --copy-from test1 --to-stage place\n"
+
+# ========== Parse CLI ==========
+while ($#argv)
+  switch ($argv[1])
+    case -h:
+    case -help:
+      echo "$usage"
+      exit 0
+      breaksw
+
+    case -proj:
+      shift argv
+      if ($#argv == 0) then
+        echo "Error: -proj option requires an argument\n$usage"
+        exit 1
+      endif
+      if ($argv[1] =~ */*) then
+        set projectname = `echo $argv[1] | cut -d'/' -f1`
+        set version     = `echo $argv[1] | cut -d'/' -f2`
+      else
+        set projectname = $argv[1]
+        set version     = "latest"
+      endif
+      breaksw
+
+    case -rev:
+      shift argv
+      if ($#argv == 0) then
+        echo "Error: -rev option requires an argument\n$usage"
+        exit 1
+      endif
+      set version = $argv[1]
+      breaksw
+
+    case -domain:
+      shift argv
+      if ($#argv == 0) then
+        echo "Error: -domain option requires an argument\n$usage"
+        exit 1
+      endif
+      set domain = `echo $argv[1] | tr '[:upper:]' '[:lower:]'`
+      set DOMAIN = ""
+      setenv DOMAIN "$argv[1]"
+      breaksw
+
+    case -block:
+      shift argv
+      if ($#argv == 0) then
+        echo "Error: -block option requires an argument\n$usage"
+        exit 1
+      endif
+      set block = $argv[1]
+      setenv BLOCK_NAME "$argv[1]"
+      breaksw
+
+    case -exp:
+      shift argv
+      if ($#argv == 0) then
+        echo "Error: -exp option requires an argument\n$usage"
+        exit 1
+      endif
+      set exp = $argv[1]
+      setenv EXP_NAME $exp
+      breaksw
+
+    case -rtltag:
+      shift argv
+      if ($#argv == 0) then
+        echo "Error: -rtltag option requires an argument\n$usage"
+        exit 1
+      endif
+      set rtltag = $argv[1]
+      breaksw
+
+    case --copy-from:
+      shift argv
+      if ($#argv == 0) then
+        echo "Error: --copy-from option requires an argument\n$usage"
+        exit 1
+      endif
+      set copy_from = $argv[1]
+      breaksw
+
+    case --to-stage:
+      shift argv
+      if ($#argv == 0) then
+        echo "Error: --to-stage option requires an argument\n$usage"
+        exit 1
+      endif
+      set to_stage = $argv[1]
+      breaksw
+
+    default:
+      echo "Warning: Unknown option: $argv[1]"
+      echo "$usage"
+      exit 1
+      breaksw
+  endsw
+  shift argv
+end
+
+# ========== Validate required args ==========
+if ("$projectname" == "") then
+  echo "Error: Missing -proj\n$usage"
+  exit 1
+endif
+if ("$domain" == "") then
+  echo "Error: Missing -domain\n$usage"
+  exit 1
+endif
+
+if ("$rtltag" == "") then
+  echo "Error: Missing -rtltag$usage"
+  exit 1
+endif
+
+# ========== Validate --copy-from and --to-stage ==========
+if ( "$copy_from" != "" ) then
+  if ( "$to_stage" == "" ) then
+    echo "Error: --copy-from requires --to-stage to be specified\n$usage"
+    exit 1
+  endif
+  if ( "$exp" == "" ) then
+    echo "Error: --copy-from requires -exp <new_name> to be specified\n$usage"
+    exit 1
+  endif
+endif
+
+if ( "$to_stage" != "" ) then
+  if ( "$copy_from" == "" ) then
+    echo "Error: --to-stage requires --copy-from to be specified\n$usage"
+    exit 1
+  endif
+  # Validate stage name
+  set valid_stages = ( init floorplan place cts postcts route postroute chip_finish )
+  set stage_valid = 0
+  foreach s ( $valid_stages )
+    if ( "$to_stage" == "$s" ) then
+      set stage_valid = 1
+      break
+    endif
+  end
+  if ( $stage_valid == 0 ) then
+    echo "Error: Invalid --to-stage value '$to_stage'. Valid stages: init floorplan place cts postcts route postroute chip_finish"
+    exit 1
+  endif
+  unset valid_stages stage_valid s
+endif
+
+# =========================================================
+# PD/DFT EXP handling:
+#  1) If -exp not given -> auto-create exp_<timestamp>
+#  2) Existence check is performed later once EXP_DIR path is known
+# =========================================================
+if ( "$domain" == "pd" || "$domain" == "dft" ) then
+  if ( "$block" != "" && "$exp" == "" ) then
+    set _ts = `date +"%Y%m%d_%H%M%S"`
+    set exp = "exp_${_ts}"
+    setenv EXP_NAME "$exp"
+    echo "Info : -exp not provided; using auto experiment name: $exp"
+    unset _ts
+  endif
+endif
+
+# ========== Source project env (supports -rev) ==========
+set env_base = "/proj5/REL/env_scripts/projects/$projectname"
+set env_candidates = ()
+
+if ( "$version" == "" || "$version" == "latest" ) then
+  set env_candidates = ( \
+    "$env_base/latest/$projectname.env" \
+    "$env_base/$projectname.env" )
+else
+  set env_candidates = ( "$env_base/$version/$projectname.env" )
+endif
+
+set env_file = ""
+foreach _cand ( $env_candidates )
+  if ( -r "$_cand" ) then
+    set env_file = "$_cand"
+    break
+  endif
+end
+
+if ( "$env_file" == "" ) then
+  echo "Error: No project env found. Tried:"
+  foreach _cand ( $env_candidates )
+    echo "  $_cand"
+  end
+  exit 1
+endif
+
+source "$env_file"
+if ( $status != 0 ) then
+  echo "Error: Failed to source project environment: $env_file"
+  exit 1
+endif
+
+# Publish resolved revision (so tools downstream know what we actually loaded)
+if ( "$version" == "" ) set version = "latest"
+setenv PROJ_REV "$version" 
+echo "Info : Sourced $env_file (PROJ_REV=$PROJ_REV)"
+
+if ( ! $?PROJ_ROOT || "$PROJ_ROOT" == "" ) then
+  echo "Error: PROJ_ROOT is not set after sourcing env. Contact CAD."
+  exit 1
+endif
+
+# --- normalize PROJ_ROOT to lowercase project folder name ---
+set _pr_dir  = `dirname "$PROJ_ROOT"`
+set _pr_base = `basename "$PROJ_ROOT"`
+set _pr_lc   = `echo "$_pr_base" | tr '[:upper:]' '[:lower:]'`
+set _pr_norm = "$_pr_dir/$_pr_lc"
+if ( -d "$_pr_norm" ) then
+  setenv PROJ_ROOT "$_pr_norm"
+  echo "Info : Using normalized PROJ_ROOT = $PROJ_ROOT"
+else
+  echo "Warning: Lowercase project root '$_pr_norm' not found; keeping $PROJ_ROOT"
+endif
+unset _pr_dir _pr_base _pr_lc _pr_norm
+
+# ========== env_scripts ==========
+set _tools_base = "/proj5/REL/env_scripts/projects/$projectname"
+if ( "$PROJ_REV" == "latest" ) then
+  set _tools_dir = "$_tools_base/latest/tools_scripts"
+  set syn1 = "$_tools_base/latest/syn"
+  set lec1 = "$_tools_base/latest/lec"
+  set sta1 = "$_tools_base/latest/sta"
+  set pnr1 = "$_tools_base/latest/pnr"
+  set rcextraction1 = "$_tools_base/latest/rcextraction"
+  set emir1 = "$_tools_base/latest/emir"
+  set pv1 = "$_tools_base/latest/pv"
+  set mf1 = "$_tools_base/latest/"
+  set ref_block1 = "$_tools_base/latest/ref_block"
+else
+  set _tools_dir = "$_tools_base/$PROJ_REV/tools_scripts"
+  set syn1 = "$_tools_base/$PROJ_REV/syn"
+  set sta1 = "$_tools_base/latest/sta"
+  set pnr1 = "$_tools_base/$PROJ_REV/pnr"
+  set emir1 = "$_tools_base/$PROJ_REV/emir"
+  set lec1 = "$_tools_base/$PROJ_REV/lec"
+  set rcextraction1 = "$_tools_base/$PROJ_REV/rcextraction"
+  set pv1 = "$_tools_base/$PROJ_REV/pv"
+  set mf1  = "$_tools_base/$PROJ_REV"
+  set ref_block1 = "$_tools_base/$PROJ_REV/ref_block"
+endif
+setenv env_scripts "$_tools_dir"
+setenv syn "$syn1"
+setenv lec "$lec1"
+setenv emir "$emir1"
+setenv pnr "$pnr1"
+setenv rcextraction "$rcextraction1"
+setenv pv "$pv1" 
+setenv sta "$sta1"
+setenv ENV_SCRIPTS "$_tools_dir"
+setenv mf "$mf1"
+setenv ref_block "$ref_block1"
+
+if ( -d "$_tools_dir" ) then
+  echo "Info : env scripts = $env_scripts"
+else
+  echo "Warning: env_scripts not found at $env_scripts"
+endif
+unset _tools_base _tools_dir
+
+# ========== Map domain -> tree name & default flows/sflows ==========
+set tree   = ""
+set flows  = ()
+set sflows = ()
+
+switch ($domain)
+  case ades:
+    set tree = "adesign"
+    set sflows = (schematic sim corners)
+    breaksw
+  case design:
+    set tree = "design"
+    breaksw
+  case pd:
+    set tree = "pd"
+    breaksw
+  case alayout:
+    set tree = "alayout"
+    set sflows = (dashboard)
+    breaksw
+  case verification:
+    set tree = "verification"
+    breaksw
+  case dft:
+    set tree = "dft"
+    set sflows = (GEN_RTL GEN_RTL/scan GEN_RTL/slib GEN_RTL/mbist GEN_RTL/eco GEN_RTL/pattern_gen GEN_RTL/tap_select GEN_RTL/kl_extraction config TSDB_DIR simulation simulation/config simulation/RTL_no_timing simulation/GLS_timing simulation/RETARGET_notiming simulation/RETARGET_timing simulation/EXTEST_notiming simulation/EXTEST_timing)
+    breaksw
+  default:
+    echo "Error: Unknown -domain '$domain'. Expected one of: ades design pd alayout verification dft"
+    exit 1
+    breaksw
+endsw
+
+# ========== Domain-specific arg rules ==========
+if ( "$tree" == "adesign" || "$tree" == "alayout" || "$tree" == "verification" ) then
+  if ( "$exp" != "" ) then
+    echo "Info : -exp is not applicable for domain '$domain'; ignoring '$exp'."
+    set exp = ""
+  endif
+else if ( "$tree" == "design" ) then
+  if ( "$exp" != "" ) then
+    echo "Info : -exp is ignored for domain 'design'."
+    set exp = ""
+  endif
+endif
+
+# ========== Access gate ==========
+set users_dir   = "$PROJ_ROOT/$tree/users"
+set access_path = "$users_dir/$USER"
+if (! -d "$users_dir") then
+  echo "Error: Users directory not found: $users_dir"
+  exit 1
+endif
+if (-d "$access_path") then
+  echo "Info : Project access verified at $access_path"
+else
+  /usr/bin/mkdir -p "$access_path" || exit 1
+  echo "Info : Project access established at $access_path"
+endif
+
+# ========== Set WA_ROOT ==========
+set wa_root = "$access_path"
+setenv WA_ROOT "$wa_root"
+
+# ========== Set SCRATCH_ROOT (mirror only; no inner dirs) ==========
+set scratch_base = `echo $wa_root | sed 's|projects|scratch_projects|'`
+if ( "$tree" == "pd" || "$tree" == "dft" ) then
+  if ( "$rtltag" != "" ) then
+    set scratch_base = "$scratch_base/$rtltag"
+  endif
+  if ( "$block" != "" ) then
+    set scratch_base = "$scratch_base/$block"
+    if ( "$exp" != "" ) set scratch_base = "$scratch_base/$exp"
+  endif
+else if ( "$tree" == "design" ) then
+  if ( "$block" != "" ) set scratch_base = "$scratch_base/$block"
+endif
+if ( ! -d "$scratch_base" ) then
+  /usr/bin/mkdir -p "$scratch_base" || exit 1
+endif
+setenv SCRATCH_ROOT "$scratch_base"
+
+# ========== Decide WA base ==========
+set wa_base = "$WA_ROOT"
+unsetenv RTL_TAG
+unsetenv RTL_TAG_DIR
+unsetenv BLOCK_DIR
+
+if ( "$tree" == "design" ) then
+  if ( "$block" != "" ) then
+    set wa_base = "$wa_base/$block"
+    if ( ! -d "$wa_base" ) /usr/bin/mkdir -p "$wa_base" || exit 1
+    setenv BLOCK_DIR "$wa_base"
+  endif
+
+else if ( "$tree" == "pd" || "$tree" == "dft" ) then
+  if ( "$block" != "" ) then
+    set wa_base = "$wa_base/$block"
+    setenv BLOCK_DIR "$wa_base"
+  if ( "$rtltag" != "" ) then
+    set wa_base = "$wa_base/$rtltag"
+    if ( ! -d "$wa_base" ) /usr/bin/mkdir -p "$wa_base" || exit 1
+    setenv RTL_TAG "$rtltag"
+    setenv RTL_TAG_DIR "$wa_base"
+  endif
+    if ( "$exp" != "" ) then
+      set wa_base = "$wa_base/$exp"
+
+      # ---- NEW: if experiment already exists, error out ----
+      if ( -d "$wa_base" ) then
+        echo "Error: Experiment already exists: $wa_base"
+        echo "       Use a different -exp name OR remove/rename the existing experiment."
+        exit 1
+      endif
+
+      # ---- Handle --copy-from ----
+      if ( "$copy_from" != "" ) then
+        # Build source experiment path (same parent, different exp name)
+        set src_exp_base = `dirname "$wa_base"`
+        set src_exp_path = "$src_exp_base/$copy_from"
+
+        if ( ! -d "$src_exp_path" ) then
+          echo "Error: Source experiment does not exist: $src_exp_path"
+          exit 1
+        endif
+
+        echo "Info : Copying experiment from '$copy_from' to '$exp' (up to stage: $to_stage)"
+        /bin/cp -r "$src_exp_path" "$wa_base" || exit 1
+
+        # Define stage order
+        set all_stages = ( init floorplan place cts postcts route postroute chip_finish )
+        set clean_stages = 0
+
+        # Find stages after to_stage and clean them
+        foreach stage ( $all_stages )
+          if ( $clean_stages == 1 ) then
+            # Clean logs, reports, outputs, work for this stage
+            if ( -d "$wa_base/pnr/$stage" ) then
+              echo "Info : Cleaning stage '$stage' for fresh run"
+              foreach sub ( logs reports outputs work )
+                if ( -d "$wa_base/pnr/$stage/$sub" ) then
+                  /bin/rm -rf "$wa_base/pnr/$stage/$sub"/* >& /dev/null
+                endif
+              end
+            endif
+          endif
+          if ( "$stage" == "$to_stage" ) then
+            set clean_stages = 1
+          endif
+        end
+        unset all_stages clean_stages src_exp_base src_exp_path
+
+        echo "Info : Experiment copied and stages after '$to_stage' cleaned."
+      else
+        /usr/bin/mkdir -p "$wa_base" || exit 1
+      endif
+
+      setenv EXP_DIR "$wa_base"
+      setenv EXP_DIR "$wa_base" >> "$EXP_DIR/sourceproj.env"
+    endif
+  endif
+endif
+
+# ========== SVN base (from PROJ_REPO; no /trunk) ==========
+if ( ! $?PROJ_REPO || "$PROJ_REPO" == "" ) then
+  echo "Error: PROJ_REPO is not set in the project .env; cannot perform SVN export."
+  exit 1
+endif
+set svn_base = `echo "$PROJ_REPO" | sed 's|/*$||'`
+
+# ========== ECO flow selection ==========
+set _exp_lc = `echo "$exp" | tr '[:upper:]' '[:lower:]'`
+if ( "$domain" == "pd" && "$_exp_lc" == "eco" ) then
+  set eco_pnr_flows = (pnr/eco pnr/eco/inputs)
+  set eco_pv_flows  = (pv/lvs pv/drc pv/antenna pv/esd pv/bump pv/perc)
+  set eco_sta_flows = (sta/work sta/corner_runs)
+  set eco_lec_flows = (lec/r2g lec/g2g lec/clp)
+  set flows = ( $eco_pnr_flows $eco_pv_flows $eco_sta_flows $eco_lec_flows )
+  echo "Info : Using ECO-specific Pd flows (triggered by -exp eco)"
+endif
+unset _exp_lc
+
+# ========== SVN export logic using PROJ_REPO ==========
+set did_export = 0
+if ( "$tree" == "adesign" || "$tree" == "alayout" || "$tree" == "verification" ) then
+  set dom_use = ""
+  set dom_candidates = ()
+  if ( "$PROJ_REV" != "" && "$PROJ_REV" != "latest" ) then
+    set dom_candidates = ( $dom_candidates "$svn_base/trunk/$tree/$PROJ_REV" )
+  endif
+  set dom_candidates = ( $dom_candidates "$svn_base/trunk/$tree/latest" )
+  set dom_candidates = ( $dom_candidates "$svn_base/trunk/$tree" )
+  foreach _cand ( $dom_candidates )
+    svn ls --non-interactive --trust-server-cert "$_cand" >& /dev/null
+    if ( $status == 0 ) then
+      set dom_use = "$_cand"
+      break
+    endif
+  end
+  if ( "$dom_use" != "" ) then
+    svn export --non-interactive --trust-server-cert --force "$dom_use" "$WA_ROOT" >& /dev/null
+    if ( $status == 0 ) then
+      echo "Info : SVN exported $dom_use -> $WA_ROOT (overlay)"
+      /et did_export = 1
+    else
+      echo "Warning: SVN export failed from $dom_use to $WA_ROOT"
+    endif
+  else
+    echo "Warning: No usable SVN path for domain '$tree' under $svn_base"
+  endif
+
+else if ( "$tree" == "design" ) then
+  if ( "$block" != "" ) then
+    set primary = "$svn_base/trunk/$tree/$block"
+    svn ls --non-interactive --trust-server-cert "$primary" >& /dev/null
+    if ( $status == 0 ) then
+      svn export --non-interactive --trust-server-cert --force "$primary" "$wa_base" >& /dev/null
+      if ( $status == 0 ) then
+        echo "Info : SVN exported $primary -> $wa_base (overlay)"
+        set did_export = 1
+      endif
+    endif
+  else
+    echo "Info : design domain without -block: no SVN export performed."
+  endif
+
+else
+  if ( "$block" != "" ) then
+    set primary = "$svn_base/trunk/$tree/$block"
+    svn ls --non-interactive --trust-server-cert "$primary" >& /dev/null
+    if ( $status == 0 ) then
+      svn export --non-interactive --trust-server-cert --force "$primary" "$wa_base" >& /dev/null
+      if ( $status == 0 ) then
+        echo "Info : SVN exported $primary -> $wa_base (overlay)"
+        set did_export = 1
+      endif
+    else
+      foreach t ( "$svn_base/$tree/blocks/$block" "$svn_base/$tree/$block/scripts" )
+        svn ls --non-interactive --trust-server-cert "$t" >& /dev/null
+        if ( $status == 0 ) then
+          svn export --non-interactive --trust-server-cert --force "$t" "$wa_base" >& /dev/null
+          if ( $status == 0 ) then
+            echo "Info : SVN exported $t -> $wa_base (overlay)"
+            set did_export = 1
+            break
+          endif
+        endif
+      end
+      if ( $did_export == 0 ) then
+        echo "Warning: No SVN content found for block '$block' under $svn_base/$tree/"
+      endif
+    endif
+  else
+    echo "Info : $tree domain without -block: no SVN export performed."
+  endif
+endif
+
+# ========== Ensure domain structure (WA ONLY) ==========
+if ( "$tree" == "pd" && "$exp" != "" && "$copy_from" == "" ) then
+  echo "Info : Creating PD experiment layout under: $wa_base"
+  foreach _base ( "$wa_base" )
+    /usr/bin/mkdir -p "$_base/block_scripts"  || exit 1
+    /usr/bin/mkdir -p "$_base/block_inputs"   || exit 1
+    /usr/bin/mkdir -p "$_base/dashboard"      || exit 1
+    # Copy block-specific files from ref_block (matching block name only)
+    # .tcl files -> block_scripts, all others -> block_inputs
+    if ( -d "$ref_block" ) then
+      foreach f ( "$ref_block"/${block}.* "$ref_block"/${block}_* )
+        if ( -f "$f" ) then
+          set _fname = `basename "$f"`
+          if ( "$_fname:e" == "tcl" ) then
+            /bin/cp -f "$f" "$_base/block_scripts/" && echo "Info : Copied $_fname to block_scripts"
+          else
+            /bin/cp -f "$f" "$_base/block_inputs/" && echo "Info : Copied $_fname to block_inputs"
+          endif
+        endif
+      end
+      unset _fname
+    endif
+    foreach sub ( logs reports outputs work inputs)
+      /usr/bin/mkdir -p "$_base/syn/$sub" || exit 1
+      /usr/bin/mkdir -p "$_base/rcextraction/$sub" || exit 1
+    end
+    foreach stage ( init floorplan place cts postcts route postroute chip_finish )
+      foreach sub ( logs reports outputs work)
+        /usr/bin/mkdir -p "$_base/pnr/$stage/$sub" || exit 1
+      end
+    end
+    foreach kind ( static vectorless vectored sigem )
+      foreach sub ( logs reports outputs work )
+        /usr/bin/mkdir -p "$_base/emir/$kind/$sub" || exit 1
+      end
+    end
+    foreach sub ( work logs reports outputs inputs )
+      /usr/bin/mkdir -p "$_base/sta/$sub" || exit 1
+    end
+    foreach sub ( logs reports outputs work inputs)
+      /usr/bin/mkdir -p "$_base/sta/corner_runs/$sub" || exit 1
+    end
+    foreach check ( lvs drc antenna )
+      foreach sub ( logs reports outputs work )
+        /usr/bin/mkdir -p "$_base/pv/$check/$sub" || exit 1
+      end
+    end
+    foreach sub ( logs reports outputs work inputs )
+      /usr/bin/mkdir -p "$_base/pv/feol_fill/$sub" || exit 1
+      /usr/bin/mkdir -p "$_base/pv/beol_fill/$sub" || exit 1
+      /usr/bin/mkdir -p "$_base/pv/merge_fill/$sub" || exit 1
+      /usr/bin/mkdir -p "$_base/pv/cdl/$sub" || exit 1
+    end
+    foreach mode ( r2g g2g clp )
+      foreach sub ( logs reports outputs work )
+        /usr/bin/mkdir -p "$_base/lec/$mode/$sub" || exit 1
+      end
+    end
+  end
+  echo "Info : PD experiment layout created."
+else
+  set _mk_dirs = ()
+  if ( $#flows  > 0 ) set _mk_dirs = ( $_mk_dirs $flows )
+  if ( $#sflows > 0 ) set _mk_dirs = ( $_mk_dirs $sflows )
+  if ( $#_mk_dirs > 0 ) then
+    echo "Info : Creating domain directories under: $wa_base"
+    foreach d ( $_mk_dirs )
+      if ( ! -d "$wa_base/$d" ) /usr/bin/mkdir -p "$wa_base/$d" || exit 1
+    end
+    echo "Info : Ensured domain structure in WA."
+  endif
+endif
+
+# ========== DESIGN RTL PATH (design + -block; optional -rtltag) ==========
+if ( "$tree" == "design" && "$block" != "" ) then
+  set _rtl_root = "/CX_CAD/REL/${projectname}_domain"
+  if ( "$rtltag" != "" ) then
+    set _rtl_candidate = "${_rtl_root}/tags/${rtltag}/design/unitrtl/${block}"
+  else
+    set _rtl_candidate = "${_rtl_root}/trunk/design/latest/unitrtl/${block}"
+  endif
+  if ( -d "$_rtl_candidate" ) then
+    setenv PROJ_RTL_PATH "$_rtl_candidate"
+    set proj_rtl_path = "$_rtl_candidate"
+    echo "Info : PROJ_RTL_PATH = $PROJ_RTL_PATH"
+  else
+    echo "Warning: RTL path not found: $_rtl_candidate"
+  endif
+  unset _rtl_root _rtl_candidate
+endif
+
+echo "Info : WA_ROOT      = $WA_ROOT"
+echo "Info : SCRATCH_ROOT = $SCRATCH_ROOT"
+
+# ========== Environment snapshot (end of run) ==========
+echo ""
+setenv BLOCK_SCRIPTS $EXP_DIR/block_scripts
+setenv BLOCK_INPUTS $EXP_DIR/block_inputs
+
+echo "================= ENV SNAPSHOT ================="
+set _keys = ( \
+  PROJ_NAME PROJ_REV PROJ_ROOT PROJ_SCRATCH PROJ_REPO \
+  CAD_ROOT INFRA_SCRIPTS \
+  WA_ROOT SCRATCH_ROOT \
+  env_scripts ENV_SCRIPTS \
+  PROJ_RTL_PATH RTL_TAG RTL_TAG_DIR BLOCK_DIR  \
+  syn lec pnr pv rcextraction emir BLOCK_NAME EXP_NAME RTL_TAG BLOCK_SCRIPTS BLOCK_INPUTS\
+)
+cat "$env_base/latest/$projectname.env" >> $EXP_DIR/sourceproj.env
+echo "#================================" >> $EXP_DIR/sourceproj.env
+foreach k ( $_keys )
+  set _val = "`/usr/bin/printenv $k`"
+  if ( "$_val" != "" ) then
+    echo "setenv $k  $_val" >> $EXP_DIR/sourceproj.env
+    echo "setenv $k  $_val" 
+    
+  endif
+end
+unset _val k _keys
+echo "------------------------------------------------"
+echo "All environment variables (sorted):"
+#/usr/bin/printenv | /usr/bin/sort
+echo "================= END SNAPSHOT ================="
+echo ""
+
+# ========== Link tool Makefiles into EXP_DIR ==========
+ln -s $syn/Makefile "$EXP_DIR/syn/"
+ln -s $lec/Makefile "$EXP_DIR/lec/"
+ln -s $pnr/Makefile "$EXP_DIR/pnr/"
+ln -s $emir/Makefile "$EXP_DIR/emir/"
+ln -s $rcextraction/Makefile "$EXP_DIR/rcextraction/"
+ln -s $pv/Makefile "$EXP_DIR/pv/"
+ln -s $sta/Makefile "$EXP_DIR/sta/"
+ln -s $mf/Makefile "$EXP_DIR/"
+ln -s /proj1/pdk/foundries/tsmc/N28/versions/v1.0/config/tech.yaml "$EXP_DIR/tech.yaml"
+echo "setenv EXP_DIR $wa_base" >> "$EXP_DIR/sourceproj.env"
+#echo "cd $EXP_DIR"             >> "$EXP_DIR/sourceproj.env"
+echo "setenv EXP_DIR  $EXP_DIR"             
+cd "$EXP_DIR"

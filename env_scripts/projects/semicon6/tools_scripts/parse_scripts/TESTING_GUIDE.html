@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metrics Collection Scripts - Testing Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 40px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 4px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+            font-size: 2em;
+        }
+        
+        h3 {
+            color: #2980b9;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        h4 {
+            color: #16a085;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        
+        pre {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border-left: 4px solid #3498db;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        code {
+            background-color: #ecf0f1;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #e74c3c;
+            font-size: 0.9em;
+        }
+        
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: #ecf0f1;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        strong {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        p {
+            margin-bottom: 15px;
+        }
+        
+        hr {
+            border: none;
+            border-top: 2px solid #ecf0f1;
+            margin: 40px 0;
+        }
+        
+        .back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: none;
+        }
+        
+        .back-to-top:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="top"></div>
+        <h1>Metrics Collection Scripts - Testing Guide</h1><h2>Table of Contents</h2>
+1. [Architecture Overview](#architecture-overview)
+2. [How the Scripts Work](#how-the-scripts-work)
+3. [Testing Plan](#testing-plan)
+4. [Common Issues and Troubleshooting](#common-issues-and-troubleshooting)</p><hr><h2>Architecture Overview</h2><h3>Component Diagram</h3>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│                    Design Flow (Genus/Innovus)               │
+│                    Generates Reports & Logs                  │
+└─────────────────┬───────────────────────────────────────────┘
+                  │
+                  │ Reports: timing_summary.rpt, report_qor.rpt,
+                  │          report_area.rpt, etc.
+                  │ Logs: *.log files
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│              collect_metrics.py (Orchestrator)               │
+│  • Reads stage configuration (syn, place, route, etc.)      │
+│  • Calls appropriate parsers for each stage                 │
+│  • Aggregates all metrics into single structure             │
+│  • Generates JSON and CSV output                            │
+└─────────────────┬───────────────────────────────────────────┘
+                  │
+                  │ Calls parsing functions
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│              metrics_utils.py (Parser Library)               │
+│  • parse_timing_path_groups() - All timing metrics          │
+│  • parse_drv_violations() - DRV checks                      │
+│  • parse_area() - Area and utilization                      │
+│  • parse_instance_count() - Cell count                      │
+│  • parse_congestion_drc() - DRC violations                  │
+│  • format_csv_row() - CSV formatting                        │
+│  • export_to_json() / export_to_csv() - File writers        │
+└─────────────────┬───────────────────────────────────────────┘
+                  │
+                  │ Outputs
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Output Files                              │
+│  • <runtag>_metrics.json - Hierarchical data                │
+│  • <runtag>_metrics.csv  - Flat table for dashboard         │
+└─────────────────────────────────────────────────────────────┘</code></pre><hr><h2>How the Scripts Work</h2><h3>1. collect_metrics.py - Main Orchestrator</h3><h4>Purpose</h4>
+Main entry point that orchestrates the entire metrics collection process.</p><h4>Key Classes and Functions</h4><p><strong>MetricsCollector Class:</strong>
+<pre><code>class MetricsCollector:
+    def __init__(self, args):
+        # Stores configuration
+        self.stage = args.stage           # e.g., 'syn', 'place', 'route'
+        self.stage_dir = Path(args.stage_dir)  # e.g., /path/to/run1/syn
+        self.run_dir = Path(args.run_dir)      # e.g., /path/to/run1
+        self.runtag = args.runtag         # e.g., 'run1'
+        self.block_name = args.block_name # e.g., 'aes_cipher_top'</p><p>    def collect_stage_metrics(self):
+        # Main collection logic</p><p>    def save_metrics(self):
+        # Export to JSON and CSV</code></pre><h4>Workflow Step-by-Step</h4><p><strong>Step 1: Initialization</strong>
+<pre><code>User runs: python3 collect_metrics.py --stage syn --stage-dir ./run1/syn \
+           --run-dir ./run1 --runtag run1 --block-name aes_cipher_top</p><p>Script:
+1. Parses command-line arguments
+2. Creates MetricsCollector instance
+3. Loads existing metrics JSON if available (for incremental updates)</code></pre><p><strong>Step 2: Stage Configuration Lookup</strong>
+<pre><code><h1>STAGE_CONFIG dictionary maps stage names to parsers</h1>
+STAGE_CONFIG = {
+    'syn': {
+        'name': 'Synthesis',
+        'reports_subdir': 'reports',
+        'logs_subdir': 'logs',
+        'parsers': [
+            'setup_timing',      # Parse setup timing
+            'drv_violations',    # Parse DRV checks
+            'area',              # Parse area metrics
+            'instance_count',    # Parse cell count
+        ]
+    },
+    'route': {
+        'parsers': [
+            'setup_timing',
+            'hold_timing',       # Hold timing added for post-CTS stages
+            'drv_violations',
+            'congestion_drc',    # DRC violations added for routing stages
+            'noise_metrics',     # Noise analysis
+            ...
+        ]
+    }
+}</code></pre><p><strong>Step 3: Initialize ALL Metrics with "N/A" Defaults</strong>
+<pre><code>stage_metrics = {
+    # Metadata (always present)
+    'stage': 'syn',
+    'timestamp': '2025-12-23 10:00:00',
+    'project': 'project1',
+    'block_name': 'aes_cipher_top',
+    'run_directory': '/path/to/run1',
+    'stage_directory': '/path/to/run1/syn',</p><p>    # Timing metrics (default: "N/A")
+    'internal_timing_r2r_wns': "N/A",
+    'internal_timing_r2r_tns': "N/A",
+    'internal_timing_r2r_nvp': "N/A",
+    'interface_timing_i2r_wns': "N/A",
+    # ... all other fields initialized to "N/A"</p><p>    # Sign-off metrics
+    'ir_static': "N/A",
+    'em_power': "N/A",
+    'em_signal': "N/A",
+    'pv_drc_base': "N/A",
+    'pv_drc_metal': "N/A",
+    'pv_drc_antenna': "N/A",
+    'lvs': "N/A",
+    'lec': "N/A",
+}</code></pre><p><strong>Step 4: Run Parsers and Update Metrics</strong>
+<pre><code>for parser_name in config['parsers']:
+    if parser_name == 'setup_timing':
+        # Call parser
+        path_groups = utils.parse_timing_path_groups(reports_dir, 'setup')</p><p>        # Extract metrics - ONLY UPDATE if value is valid (not None or "N/A")
+        def update_if_valid(key, value):
+            if value is not None and value != "N/A":
+                stage_metrics[key] = value</p><p>        # Update R2R timing (internal)
+        if 'reg2reg' in path_groups:
+            update_if_valid('internal_timing_r2r_wns',
+                          path_groups['reg2reg'].get('wns'))
+            update_if_valid('internal_timing_r2r_tns',
+                          path_groups['reg2reg'].get('tns'))
+            update_if_valid('internal_timing_r2r_nvp',
+                          path_groups['reg2reg'].get('nvp'))</p><p>        # Update I2R timing (interface)
+        if 'in2reg' in path_groups:
+            update_if_valid('interface_timing_i2r_wns',
+                          path_groups['in2reg'].get('wns'))
+            # ... etc</code></pre><p><strong>Step 5: Parse Log Files</strong>
+<pre><code>log_metrics = utils.parse_log_errors_warnings(logs_dir)
+stage_metrics['log_errors'] = log_metrics['errors']
+stage_metrics['log_warnings'] = log_metrics['warnings']</code></pre><p><strong>Step 6: Calculate Runtime</strong>
+<pre><code><h1>Uses log file timestamps to calculate runtime</h1>
+stage_metrics['runtime'] = utils.calculate_runtime(stage_dir)
+<h1>Returns format: "HH:MM:SS"</h1></code></pre><p><strong>Step 7: Determine Run Status</strong>
+<pre><code>stage_metrics['run_status'] = utils.determine_run_status(stage_metrics)
+<h1>Returns: 'pass', 'fail', or 'continue_with_error'</h1>
+<h1>Based on:</h1>
+<h1>- Errors > 0 → 'fail'</h1>
+<h1>- Setup/Hold WNS < -0.5ns → 'fail'</h1>
+<h1>- DRC violations > 100 → 'fail'</h1>
+<h1>- Warnings > 50 or minor timing violations → 'continue_with_error'</h1>
+<h1>- Otherwise → 'pass'</h1></code></pre><p><strong>Step 8: Save to Files</strong>
+<pre><code><h1>Add stage metrics to overall structure</h1>
+self.all_metrics['stages'][self.stage] = stage_metrics</p><h1>Export to JSON (hierarchical)</h1>
+utils.export_to_json(self.all_metrics, json_file)</p><h1>Export to CSV (flat table)</h1>
+utils.export_to_csv(self.all_metrics, csv_file)</code></pre><hr><h3>2. metrics_utils.py - Parser Library</h3><h4>Purpose</h4>
+Contains all parsing functions and utility functions for extracting metrics from EDA tool reports.</p><h4>Key Parsing Functions</h4><p><strong>A. parse_timing_path_groups(reports_dir, analysis_type='setup')</strong></p><p><strong>Purpose:</strong> Parse ALL timing path groups from a single timing report</p><p><strong>Input:</strong>
+- <code>reports_dir</code>: Path to reports directory
+- <code>analysis_type</code>: 'setup' or 'hold'</p><p><strong>Process:</strong>
+<pre><code>1. Determine which report files to check:
+   - setup: timing_summary.rpt, setup.analysis_summary.rpt, report_qor.rpt
+   - hold: hold.analysis_summary.rpt</p><p>2. For each report file:
+   a. Read file content</p><p>   b. Try Genus format parsing:
+      View:     ALL    7420.8      0.0     0
+      Group:    clk    7420.8      0.0     0
+      Group:    in2reg  N/A        N/A     0</p><p>   c. Try Innovus format parsing:
+      View :    ALL    6.379      0.0     0
+      Group :   clk    6.379      0.0     0</p><p>   d. Extract ALL path groups into dictionary:
+      {
+        'all': {'wns': 7420.8, 'tns': 0.0, 'nvp': 0},
+        'clk': {'wns': 7420.8, 'tns': 0.0, 'nvp': 0},
+        'in2reg': {'wns': "N/A", 'tns': "N/A", 'nvp': 0},
+        'reg2out': {'wns': "N/A", 'tns': "N/A", 'nvp': 0},
+        ...
+      }</p><p>   e. parse_value() helper:
+      - Converts string to float if numeric
+      - Returns "N/A" for invalid/missing values
+      - Assumes all values are in NANOSECONDS (ns)</code></pre><p><strong>Output:</strong>
+<pre><code>{
+    'all': {'wns': 7420.8, 'tns': 0.0, 'nvp': 0},
+    'clk': {'wns': 7420.8, 'tns': 0.0, 'nvp': 0},
+    'cg_enable_group_clk': {'wns': 8704.8, 'tns': 0.0, 'nvp': 0},
+    'in2reg': {'wns': "N/A", 'tns': "N/A", 'nvp': 0},
+    'reg2out': {'wns': "N/A", 'tns': "N/A", 'nvp': 0},
+}</code></pre><p><strong>Important Notes:</strong>
+- <strong>Single function captures ALL path groups</strong> (not separate functions for R2R, I2R, etc.)
+- <strong>Returns "N/A" for missing values</strong> (never None/NULL)
+- <strong>Assumes nanoseconds</strong> - ensure tools report in ns, not ps</p><hr><p><strong>B. parse_drv_violations(reports_dir)</strong></p><p><strong>Purpose:</strong> Parse design rule violation metrics</p><p><strong>Process:</strong>
+<pre><code>1. Check report files:
+   - timing_summary.rpt (Genus)
+   - setup.analysis_summary.rpt (Innovus)
+   - report_constraint.all_violators.rpt</p><p>2. Parse DRV section using regex:
+   Check : max_transition        N/A       N/A     0
+   Check : max_capacitance    -15.000   -45.000     3
+   Check : max_fanout            N/A       N/A     0</p><p>3. Extract all DRV types:
+   - max_transition
+   - max_capacitance
+   - max_fanout
+   - min_transition
+   - min_capacitance
+   - min_fanout</code></pre><p><strong>Output:</strong>
+<pre><code>{
+    'max_transition': {'wns': "N/A", 'tns': "N/A", 'nvp': 0},
+    'max_capacitance': {'wns': -15.0, 'tns': -45.0, 'nvp': 3},
+    'max_fanout': {'wns': "N/A", 'tns': "N/A", 'nvp': 0},
+}</code></pre><hr><p><strong>C. parse_area(reports_dir)</strong></p><p><strong>Purpose:</strong> Parse area and utilization metrics</p><p><strong>Process:</strong>
+<pre><code>1. Check report files:
+   - report_area.rpt (Genus)
+   - area.summary.rpt (Innovus)
+   - report_qor.rpt (Genus QoR)</p><p>2. Parse area:
+   Genus report_qor.rpt:
+     Total Cell Area (Cell+Physical)    6303.150</p><p>   Innovus area.summary.rpt:
+     aes_cipher_top    9839    6301.134
+                       ^^^^    ^^^^^^^^
+                       cells   area</code></pre><p><strong>Output:</strong>
+<pre><code>{
+    'total_area': 6303.15,
+    'utilization': None  # if not found
+}</code></pre><hr><p><strong>D. parse_congestion_drc(reports_dir)</strong></p><p><strong>Purpose:</strong> Parse DRC violations from routing</p><p><strong>Process:</strong>
+<pre><code>1. Parse route.drc.rpt:
+   Total Violations : 4 Viols.</p><p>2. Parse route.metal_density.rpt:
+   Average Density : 65.4
+   Maximum Density : 89.2</code></pre><p><strong>Output:</strong>
+<pre><code>{
+    'drc_violations': 4,
+    'metal_density_avg': 65.4,
+    'metal_density_max': 89.2
+}</code></pre><hr><p><strong>E. parse_log_errors_warnings(logs_dir)</strong></p><p><strong>Purpose:</strong> Count errors and warnings in log files</p><p><strong>Process:</strong>
+<pre><code>1. Get all *.log* files in logs_dir</p><p>2. For each log file:
+   - Count pattern: \bERROR\b, \bFATAL\b, \bFAILED\b
+   - Count pattern: \bWARN(ING)?\b
+   - Count pattern: \bCRITICAL\b, \bSEVERE\b</p><p>3. Sum counts across all log files</code></pre><p><strong>Output:</strong>
+<pre><code>{
+    'errors': 0,
+    'warnings': 71,
+    'critical': 0
+}</code></pre><hr><p><strong>F. format_csv_row(metrics)</strong></p><p><strong>Purpose:</strong> Convert metrics dictionary to CSV row format</p><p><strong>Process:</strong>
+<pre><code>1. Format WNS/NVP combinations:
+   wns=7.421, nvp=0  →  "7.421/0"
+   wns="N/A", nvp=0  →  "N/A/0"
+   wns="N/A", nvp="N/A"  →  "N/A"</p><p>2. Format single values:
+   - Floats: format with specified decimals
+   - "N/A": keep as "N/A"
+   - None: convert to "N/A"</p><p>3. Create row dictionary with all 34 CSV columns:
+   {
+     'project': 'project1',
+     'block_name': 'aes_cipher_top',
+     'internal_timing_r2r': '7.421/0',
+     'interface_timing_i2r': 'N/A',
+     'max_tran': 'N/A/0',
+     ...
+     'ir_static': 'N/A',
+     'em_power': 'N/A',
+     'em_signal': 'N/A',
+     'pv_drc_base': 'N/A',
+     'pv_drc_metal': 'N/A',
+     'pv_drc_antenna': 'N/A',
+     'lvs': 'N/A',
+     'lec': 'N/A',
+   }</code></pre><hr><h3>3. Data Flow Example</h3><p><strong>Scenario:</strong> Engineer runs synthesis and wants to collect metrics</p><pre><code><h1>Step 1: Run synthesis</h1>
+cd /proj/aes_cipher_top/run1/syn
+genus -f genus_syn.tcl</p><h1>Reports generated:</h1>
+<h1>- reports/timing_summary.rpt</h1>
+<h1>- reports/report_qor.rpt</h1>
+<h1>- reports/report_area.rpt</h1>
+<h1>- logs/genus_syn.log</h1><h1>Step 2: Collect metrics</h1>
+cd /proj/aes_cipher_top/run1
+python3 collect_metrics.py \
+    --stage syn \
+    --stage-dir ./syn \
+    --run-dir . \
+    --runtag run1 \
+    --block-name aes_cipher_top \
+    --project myproject</p><h1>Step 3: Scripts execute</h1>
+<h1>collect_metrics.py:</h1>
+<h1>  1. Initializes stage_metrics with "N/A" for all fields</h1>
+<h1>  2. Calls parse_timing_path_groups() → reads timing_summary.rpt</h1>
+<h1>  3. Calls parse_drv_violations() → reads timing_summary.rpt</h1>
+<h1>  4. Calls parse_area() → reads report_qor.rpt</h1>
+<h1>  5. Calls parse_instance_count() → reads report_qor.rpt</h1>
+<h1>  6. Calls parse_log_errors_warnings() → reads logs/*.log</h1>
+<h1>  7. Calculates runtime from log timestamps</h1>
+<h1>  8. Determines run_status based on metrics</h1>
+<h1>  9. Exports to JSON and CSV</h1><h1>Step 4: Output files created</h1>
+<h1>- run1_metrics.json (hierarchical structure)</h1>
+<h1>- run1_metrics.csv (flat table for dashboard)</h1></code></pre><p><strong>JSON Structure:</strong>
+<pre><code>{
+  "project": "myproject",
+  "block_name": "aes_cipher_top",
+  "experiment": "run1",
+  "rtl_tag": "v1",
+  "run_directory": "/proj/aes_cipher_top/run1",
+  "stages": {
+    "syn": {
+      "stage": "syn",
+      "timestamp": "2025-12-23 10:00:00",
+      "stage_directory": "/proj/aes_cipher_top/run1/syn",
+      "internal_timing_r2r_wns": 7420.8,
+      "internal_timing_r2r_tns": 0.0,
+      "internal_timing_r2r_nvp": 0,
+      "interface_timing_i2r_wns": "N/A",
+      ... (all metrics)
+      "setup_path_groups": { ... },  // Raw parsed data
+      "drv_violations": { ... }       // Raw parsed data
+    }
+  }
+}</code></pre><hr><h2>Testing Plan</h2><h3>Phase 1: Unit Testing (Per Stage)</h3><p><strong>Objective:</strong> Test each stage individually to ensure correct parsing</p><h4>Test 1.1: Synthesis Stage (syn)</h4><p><strong>Setup:</strong>
+<pre><code><h1>Navigate to test synthesis directory</h1>
+cd /proj1/pd/users/testcase/Bharath/proj/flow28nm/aes_cipher_top/bronze_v1/run1</p><h1>Create test output directory</h1>
+mkdir -p test_results/syn_test</code></pre><p><strong>Execute:</strong>
+<pre><code>python3 ../../tool_scripts/parse_scripts/collect_metrics.py \
+    --stage syn \
+    --stage-dir ./syn \
+    --run-dir ./test_results/syn_test \
+    --runtag syn_test \
+    --block-name aes_cipher_top \
+    --project flow28nm \
+    --rtl-tag bronze_v1</code></pre><p><strong>Verification Checklist:</strong>
+☐ Script completes without errors
+☐ JSON file created: <code>test_results/syn_test/syn_test_metrics.json</code>
+☐ CSV file created: <code>test_results/syn_test/syn_test_metrics.csv</code>
+☐ Check JSON has NO null values: <code>grep -i null syn_test_metrics.json</code>
+☐ Verify timing metrics captured:
+  <pre><code>  cat syn_test_metrics.json | grep "internal_timing_r2r_wns"
+  # Expected: numeric value (e.g., 7420.8) or "N/A"
+  ```
+☐ Verify area captured:
+  ```bash
+  cat syn_test_metrics.json | grep "area"
+  # Expected: numeric value (e.g., 6303.15) or "N/A"
+  ```
+☐ Verify all required fields present:
+  ```bash
+  cat syn_test_metrics.json | grep -E "ir_static|em_power|em_signal|pv_drc_base|lvs|lec"
+  # Expected: All fields present with "N/A"
+  ```
+☐ Verify stage_directory captured:
+  ```bash
+  cat syn_test_metrics.json | grep "stage_directory"
+  # Expected: "/proj1/pd/users/testcase/Bharath/proj/flow28nm/.../syn"
+  ```</p><p><strong>Expected Output Example:</strong></code></pre>json
+{
+  "stages": {
+    "syn": {
+      "stage": "syn",
+      "internal_timing_r2r_wns": 7420.8,
+      "area": 6303.15,
+      "inst_count": 9846,
+      "log_warnings": 71,
+      "run_status": "continue_with_error"
+    }
+  }
+}
+<pre><code>
+<hr></p><h4>Test 1.2: Placement Stage (place)</h4><p><strong>Execute:</strong></code></pre>bash
+python3 ../../tool_scripts/parse_scripts/collect_metrics.py \
+    --stage place \
+    --stage-dir ./pnr/place \
+    --run-dir ./test_results/place_test \
+    --runtag place_test \
+    --block-name aes_cipher_top
+<pre><code>
+<strong>Verification Checklist:</strong>
+☐ Placement-specific metrics captured (setup timing, DRV violations)
+☐ stage_directory points to place directory
+☐ No hold timing expected (check hold_wns = "N/A")</p><hr><h4>Test 1.3: Route Stage (route)</h4><p><strong>Execute:</strong></code></pre>bash
+python3 ../../tool_scripts/parse_scripts/collect_metrics.py \
+    --stage route \
+    --stage-dir ./pnr/route \
+    --run-dir ./test_results/route_test \
+    --runtag route_test \
+    --block-name aes_cipher_top
+<pre><code>
+<strong>Verification Checklist:</strong>
+☐ Setup AND hold timing captured
+☐ DRC violations parsed (drc_violations field)
+☐ Congestion metrics if available
+☐ stage_directory points to route directory</p><hr><h3>Phase 2: Incremental Testing (Multi-Stage)</h3><p><strong>Objective:</strong> Test incremental metric collection across multiple stages</p><p><strong>Setup:</strong></code></pre>bash
+mkdir -p test_results/incremental
+<pre><code>
+<strong>Execute (Sequential):</strong></code></pre>bash
+<h1>Step 1: Collect syn metrics</h1>
+python3 ../../tool_scripts/parse_scripts/collect_metrics.py \
+    --stage syn \
+    --stage-dir ./syn \
+    --run-dir ./test_results/incremental \
+    --runtag incremental \
+    --block-name aes_cipher_top</p><h1>Step 2: Collect place metrics (should ADD to existing JSON)</h1>
+python3 ../../tool_scripts/parse_scripts/collect_metrics.py \
+    --stage place \
+    --stage-dir ./pnr/place \
+    --run-dir ./test_results/incremental \
+    --runtag incremental \
+    --block-name aes_cipher_top</p><h1>Step 3: Collect route metrics</h1>
+python3 ../../tool_scripts/parse_scripts/collect_metrics.py \
+    --stage route \
+    --stage-dir ./pnr/route \
+    --run-dir ./test_results/incremental \
+    --runtag incremental \
+    --block-name aes_cipher_top
+<pre><code>
+<strong>Verification Checklist:</strong>
+☐ JSON file has 3 stages: syn, place, route
+  ```bash
+  cat incremental_metrics.json | grep -c '"stage":'
+  # Expected: 3
+  ```
+☐ Each stage has unique stage_directory
+☐ CSV file has 3 rows (one per stage)
+  ```bash
+  wc -l incremental_metrics.csv
+  # Expected: 4 (header + 3 data rows)
+  ```
+☐ last_updated timestamp reflects latest collection</p><hr><h3>Phase 3: Edge Case Testing</h3><h4>Test 3.1: Missing Reports Directory</h4><p><strong>Setup:</strong></code></pre>bash
+mkdir -p test_edge_cases/no_reports
+<h1>Don't create reports/ directory</h1>
+<pre><code>
+<strong>Execute:</strong></code></pre>bash
+python3 collect_metrics.py \
+    --stage syn \
+    --stage-dir test_edge_cases/no_reports \
+    --run-dir test_edge_cases \
+    --runtag no_reports \
+    --block-name test_block
+<pre><code>
+<strong>Expected Behavior:</strong>
+☐ Script completes with warnings (not errors)
+☐ All metrics show "N/A"
+☐ run_status = "N/A" or based on other criteria
+☐ JSON and CSV still generated</p><hr><h4>Test 3.2: Empty Report Files</h4><p><strong>Setup:</strong></code></pre>bash
+mkdir -p test_edge_cases/empty_reports/reports
+touch test_edge_cases/empty_reports/reports/timing_summary.rpt
+touch test_edge_cases/empty_reports/reports/report_qor.rpt
+<pre><code>
+<strong>Execute:</strong></code></pre>bash
+python3 collect_metrics.py \
+    --stage syn \
+    --stage-dir test_edge_cases/empty_reports \
+    --run-dir test_edge_cases \
+    --runtag empty_reports \
+    --block-name test_block
+<pre><code>
+<strong>Expected Behavior:</strong>
+☐ Script completes with warnings
+☐ All timing metrics show "N/A"
+☐ No crashes or exceptions</p><hr><h4>Test 3.3: Reports with Violations</h4><p><strong>Setup:</strong> Use a directory with known timing/DRC violations</p><p><strong>Execute:</strong></code></pre>bash
+python3 collect_metrics.py \
+    --stage route \
+    --stage-dir <path_to_failing_route> \
+    --run-dir test_edge_cases \
+    --runtag violations_test \
+    --block-name test_block
+<pre><code>
+<strong>Verification Checklist:</strong>
+☐ Negative WNS captured correctly
+☐ TNS captured correctly
+☐ NVP (number of violating paths) captured
+☐ DRV violations counted
+☐ run_status = "fail" or "continue_with_error" (based on severity)</p><hr><h3>Phase 4: CSV Dashboard Integration Testing</h3><p><strong>Objective:</strong> Ensure CSV format is compatible with dashboard software</p><p><strong>Test 4.1: Column Count</strong></code></pre>bash
+head -1 <runtag>_metrics.csv | awk -F',' '{print NF}'
+<h1>Expected: 34 columns</h1>
+<pre><code>
+<strong>Test 4.2: Column Names</strong></code></pre>bash
+head -1 <runtag>_metrics.csv
+<h1>Expected headers:</h1>
+<h1>project,block_name,experiment,RTL_tag,user_name,run_directory,stage_directory,</h1>
+<h1>run_end_time,stage,internal_timing_r2r,internal_timing_custom,</h1>
+<h1>interface_timing_i2r,interface_timing_r2o,interface_timing_i2o,</h1>
+<h1>max_tran,max_cap,noise,mpw_min_period_double_switching,congestion_drc_metrics,</h1>
+<h1>area,inst_count,utilization,logs_errors_warnings,run_status,runtime,</h1>
+<h1>ai_summary,ir_static,em_power,em_signal,pv_drc_base,pv_drc_metal,</h1>
+<h1>pv_drc_antenna,lvs,lec</h1>
+<pre><code>
+<strong>Test 4.3: Value Formatting</strong></code></pre>bash
+<h1>Check WNS/NVP format</h1>
+cat <runtag>_metrics.csv | cut -d',' -f10
+<h1>Expected: "7.421/0" or "N/A" (not "7.421/None")</h1><h1>Check for unquoted N/A</h1>
+grep -c "N/A" <runtag>_metrics.csv
+<h1>Expected: Multiple occurrences</h1><h1>Check for NULL</h1>
+grep -i null <runtag>_metrics.csv
+<h1>Expected: No matches</h1>
+<pre><code>
+<strong>Test 4.4: Import to Dashboard</strong>
+☐ Import CSV into dashboard software
+☐ Verify all rows displayed
+☐ Verify numeric columns recognized as numbers
+☐ Verify "N/A" handled gracefully (not treated as zero)</p><hr><h3>Phase 5: Performance Testing</h3><p><strong>Test 5.1: Execution Time</strong></code></pre>bash
+time python3 collect_metrics.py \
+    --stage route \
+    --stage-dir <large_design_route_dir> \
+    --run-dir ./test_results \
+    --runtag perf_test \
+    --block-name large_design</p><h1>Expected: < 5 seconds for typical design</h1>
+<pre><code>
+<strong>Test 5.2: Large Log Files</strong></code></pre>bash
+<h1>Test with logs > 100MB</h1>
+ls -lh <stage_dir>/logs/*.log
+<h1>Run collection and verify no memory issues</h1>
+<pre><code>
+<hr></p><h2>Common Issues and Troubleshooting</h2><h3>Issue 1: "TypeError: '<' not supported between instances of 'str' and 'float'"</h3><p><strong>Cause:</strong> Trying to compare "N/A" string with numeric value</p><p><strong>Solution:</strong> Already fixed in <code>determine_run_status()</code> with <code>get_numeric()</code> helper</p><p><strong>Verification:</strong></code></pre>bash
+<h1>Run test and check for this error</h1>
+python3 collect_metrics.py ... 2>&1 | grep TypeError
+<h1>Expected: No output</h1>
+<pre><code>
+<hr></p><h3>Issue 2: NULL values in JSON output</h3><p><strong>Cause:</strong> Parsers returning None instead of "N/A"</p><p><strong>Check:</strong></code></pre>bash
+grep -i null <runtag>_metrics.json
+<h1>Expected: No matches</h1>
+<pre><code>
+<strong>Solution:</strong> Already fixed - parsers return "N/A" and collect_metrics only updates if value is valid</p><hr><h3>Issue 3: Missing stage_directory in output</h3><p><strong>Cause:</strong> Old version of scripts</p><p><strong>Check:</strong></code></pre>bash
+grep "stage_directory" <runtag>_metrics.json
+<h1>Expected: One match per stage</h1>
+<pre><code>
+<strong>Solution:</strong> Update to latest version of scripts</p><hr><h3>Issue 4: Wrong timing units (ps vs ns)</h3><p><strong>Symptom:</strong> WNS shows very large values (e.g., 7420800.0 instead of 7420.8)</p><p><strong>Cause:</strong> Reports generated in picoseconds but scripts expect nanoseconds</p><p><strong>Solution:</strong>
+1. <strong>Configure tools to report in ns:</strong>
+   ```tcl
+   # In Genus synthesis script
+   set_db timing_report_time_unit ns</p><p>   # In Innovus P&R script
+   set_global timing_report_time_unit ns
+   ```</p><p>2. <strong>Verify report units:</strong>
+   ```bash
+   grep -i "time unit" reports/timing_summary.rpt
+   # Expected: "Time Unit: ns" or similar
+   ```</p><hr><h3>Issue 5: Warnings about missing report files</h3><p><strong>Symptom:</strong></code></pre>
+[WARN] Reports directory not found: /path/to/reports
+[WARN] Error parsing setup timing from timing_summary.rpt: [Errno 2] No such file or directory
+<pre><code>
+<strong>Cause:</strong> Report files not generated or in different location</p><p><strong>Solution:</strong>
+1. Check if reports were generated:
+   ```bash
+   ls -l <stage_dir>/reports/
+   ```</p><p>2. Verify report file names match expected patterns:
+   - Genus: <code>timing_summary.rpt</code>, <code>report_qor.rpt</code>, <code>report_area.rpt</code>
+   - Innovus: <code>setup.analysis_summary.rpt</code>, <code>area.summary.rpt</code></p><p>3. If using different names, update <code>STAGE_CONFIG</code> in <code>collect_metrics.py</code></p><hr><h3>Issue 6: All metrics show "N/A"</h3><p><strong>Cause:</strong> Reports exist but parsing regex patterns don't match</p><p><strong>Debug:</strong></code></pre>bash
+<h1>Check report format</h1>
+head -50 reports/timing_summary.rpt</p><h1>Look for timing section</h1>
+grep -A 10 "View:" reports/timing_summary.rpt
+grep -A 10 "Group:" reports/timing_summary.rpt
+<pre><code>
+<strong>Solution:</strong>
+- Compare actual report format with expected patterns in <code>parse_timing_path_groups()</code>
+- If format differs, update regex patterns in <code>metrics_utils.py</code></p><hr><h3>Issue 7: CSV import fails in dashboard</h3><p><strong>Symptom:</strong> Dashboard shows error when importing CSV</p><p><strong>Debug:</strong></code></pre>bash
+<h1>Check for special characters</h1>
+file <runtag>_metrics.csv
+<h1>Expected: ASCII text or UTF-8 Unicode text</h1><h1>Check for malformed rows</h1>
+awk -F',' '{print NF}' <runtag>_metrics.csv | sort -u
+<h1>Expected: Single number (e.g., 34) for all rows</h1><h1>Check for unescaped commas in fields</h1>
+grep -n ',,,' <runtag>_metrics.csv
+<pre><code>
+<strong>Solution:</strong>
+- Ensure no commas in AI summary or other text fields
+- Already handled by CSV writer with proper quoting</p><hr><h2>Test Result Template</h2><p>Create a test report using this template:
+</code></pre>
+=============================================================================
+METRICS COLLECTION TESTING REPORT
+=============================================================================</p><p>Test Date: _______________
+Tester: _______________
+Design: _______________
+Technology: _______________</p><p>-----------------------------------------------------------------------------
+PHASE 1: UNIT TESTING
+-----------------------------------------------------------------------------</p><p>Test 1.1: Synthesis Stage
+  Status: [ ] PASS [ ] FAIL
+  Notes: _________________________________________________________________</p><p>Test 1.2: Placement Stage
+  Status: [ ] PASS [ ] FAIL
+  Notes: _________________________________________________________________</p><p>Test 1.3: Route Stage
+  Status: [ ] PASS [ ] FAIL
+  Notes: _________________________________________________________________</p><p>-----------------------------------------------------------------------------
+PHASE 2: INCREMENTAL TESTING
+-----------------------------------------------------------------------------</p><p>Multi-Stage Collection:
+  Status: [ ] PASS [ ] FAIL
+  Number of stages collected: _____
+  Notes: _________________________________________________________________</p><p>-----------------------------------------------------------------------------
+PHASE 3: EDGE CASE TESTING
+-----------------------------------------------------------------------------</p><p>Test 3.1: Missing Reports
+  Status: [ ] PASS [ ] FAIL</p><p>Test 3.2: Empty Reports
+  Status: [ ] PASS [ ] FAIL</p><p>Test 3.3: Reports with Violations
+  Status: [ ] PASS [ ] FAIL</p><p>-----------------------------------------------------------------------------
+PHASE 4: CSV DASHBOARD INTEGRATION
+-----------------------------------------------------------------------------</p><p>CSV Format Validation:
+  Status: [ ] PASS [ ] FAIL</p><p>Dashboard Import:
+  Status: [ ] PASS [ ] FAIL
+  Dashboard Software: _______________</p><p>-----------------------------------------------------------------------------
+PHASE 5: PERFORMANCE
+-----------------------------------------------------------------------------</p><p>Execution Time: _____ seconds
+Memory Usage: _____ MB</p><p>-----------------------------------------------------------------------------
+ISSUES FOUND
+-----------------------------------------------------------------------------</p><p>Issue #1:
+  Description: __________________________________________________________
+  Severity: [ ] Critical [ ] Major [ ] Minor
+  Workaround: ___________________________________________________________</p><p>Issue #2:
+  Description: __________________________________________________________
+  Severity: [ ] Critical [ ] Major [ ] Minor
+  Workaround: ___________________________________________________________</p><p>-----------------------------------------------------------------------------
+OVERALL RESULT: [ ] PASS [ ] FAIL
+-----------------------------------------------------------------------------</p><p>Recommendations:
+_________________________________________________________________________
+_________________________________________________________________________
+<pre><code>
+<hr></p><h2>Quick Reference Commands</h2><p><strong>Run metrics collection:</strong></code></pre>bash
+python3 collect_metrics.py \
+    --stage <stage_name> \
+    --stage-dir <path_to_stage_dir> \
+    --run-dir <path_to_run_dir> \
+    --runtag <run_tag> \
+    --block-name <block_name> \
+    --project <project_name> \
+    --rtl-tag <rtl_version>
+<pre><code>
+<strong>Verify output:</strong></code></pre>bash
+<h1>Check for NULL values</h1>
+grep -i null <runtag>_metrics.json</p><h1>Count stages in JSON</h1>
+cat <runtag>_metrics.json | grep -c '"stage":'</p><h1>Count rows in CSV (including header)</h1>
+wc -l <runtag>_metrics.csv</p><h1>View specific metric</h1>
+cat <runtag>_metrics.json | grep "internal_timing_r2r_wns"</p><h1>Check all sign-off metrics</h1>
+cat <runtag>_metrics.json | grep -E "ir_static|em_power|lvs|lec"
+<pre><code>
+<strong>Debug parsing:</strong></code></pre>bash
+<h1>Run with Python stack trace on error</h1>
+python3 -u collect_metrics.py ... 2>&1 | tee debug.log</p><h1>Check warnings</h1>
+grep WARN debug.log</p><h1>Check errors</h1>
+grep ERROR debug.log
+```
+</p>
+    </div>
+    <a href="#top" class="back-to-top" id="backToTop">↑ Top</a>
+    
+    <script>
+        window.onscroll = function() {
+            var btn = document.getElementById("backToTop");
+            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+                btn.style.display = "block";
+            } else {
+                btn.style.display = "none";
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+schema_version: "1.0"
+
+project:
+  name: flow28nm_generalize
+  description: "Generalized 28nm ASIC flow"
+  technology: TSMC28HPHP
+  tech_config_path: ../../tech/TSMC28HPHP/tech.yaml
+
+metal_stack_selection:
+  selected: 1P9M_4X2Y2R
+  routing_layers:
+    bottom: 1
+    top: 7
+
+synthesis_settings:
+  corner: slow0p81vm40c
+  description: "Synthesis uses worst setup corner for conservative optimization"
+
+vt_configuration:
+  available_vt_types: [SVT, HVT, LVT]
+  per_stage_control:
+    synthesis:
+      enabled_vt_types: [SVT, HVT, LVT]
+      default: SVT
+    place:
+      enabled_vt_types: [SVT, HVT, LVT]
+    cts:
+      enabled_vt_types: [LVT]
+      buffers_preferred: LVT
+      inverters_preferred: LVT
+    postcts:
+      enabled_vt_types: [SVT, HVT, LVT]
+    route:
+      enabled_vt_types: [SVT, HVT, LVT]
+    postroute:
+      enabled_vt_types: [SVT, HVT, LVT]
+
+pvt_corners:
+  voltages:
+    slow: 0.81
+    typical: 0.9
+    fast: 0.99
+  temperatures:
+    cold: -40
+    nominal: 25
+    hot: 125
+  library_corners:
+    - name: fast0p99vm40c
+      process: ff
+      voltage: fast
+      temperature: cold
+      lib_suffix: ffg0p99vm40c
+    - name: fast0p99v125c
+      process: ff
+      voltage: fast
+      temperature: hot
+      lib_suffix: ffg0p99v125c
+    - name: slow0p81v125c
+      process: ss
+      voltage: slow
+      temperature: hot
+      lib_suffix: ssg0p81v125c
+    - name: slow0p81vm40c
+      process: ss
+      voltage: slow
+      temperature: cold
+      lib_suffix: ssg0p81vm40c
+    - name: tt0p9v25c
+      process: tt
+      voltage: typical
+      temperature: nominal
+      lib_suffix: tt0p9v25c
+  rc_corners: [cworst, rcworst, cbest, rcbest, typical]
+
+analysis_views:
+  all_views:
+    - name: func_synth
+      type: setup
+      corner: slow0p81vm40c
+      rc_corner: null
+      description: "Synthesis single corner"
+    - name: func_ss125c_rcw
+      type: setup
+      corner: slow0p81v125c
+      rc_corner: rcworst
+      description: "Slow corner, hot temp, RC worst"
+    - name: func_ssm40c_cw
+      type: setup
+      corner: slow0p81vm40c
+      rc_corner: cworst
+      description: "Slow corner, cold temp, C worst"
+    - name: func_tt25c_typ
+      type: setup
+      corner: tt0p9v25c
+      rc_corner: typical
+      description: "Typical corner, nominal temp"
+    - name: func_ff125c_rcb
+      type: hold
+      corner: fast0p99v125c
+      rc_corner: rcbest
+      description: "Fast corner, hot temp, RC best"
+    - name: func_ffm40c_cb
+      type: hold
+      corner: fast0p99vm40c
+      rc_corner: cbest
+      description: "Fast corner, cold temp, C best"
+    - name: func_tt25c_typ_hold
+      type: hold
+      corner: tt0p9v25c
+      rc_corner: typical
+      description: "Typical corner for hold"
+
+  stage_selection:
+    synthesis:
+      setup_views: [func_synth]
+      hold_views: []
+    pnr:
+      setup_views: [func_ss125c_rcw, func_ssm40c_cw]
+      hold_views: [func_ff125c_rcb, func_ffm40c_cb]
+    signoff:
+      setup_views: [func_ss125c_rcw, func_ssm40c_cw, func_tt25c_typ]
+      hold_views: [func_ff125c_rcb, func_ffm40c_cb, func_tt25c_typ_hold]
+
+timing_constraints:
+  default_max_transition_data_ns: 0.3
+  default_max_transition_clock_ns: 0.25
+  cts:
+    target_skew_ns: 0.1
+    max_fanout: 16
+  hold_uncertainty_ns: 0.02
+
+derating:
+  enable: true
+  setup:
+    early: 0.97
+    late: 1.03
+  hold:
+    early: 1.03
+    late: 0.97
+
+si_settings:
+  enable_post_route: true
+  glitch_threshold: 0.25
+  enable_crosstalk: true
+
+power_ground_nets:
+  power: VDD
+  ground: VSS

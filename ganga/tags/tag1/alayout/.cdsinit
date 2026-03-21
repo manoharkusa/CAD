@@ -1,0 +1,9 @@
+let( (scriptPath)
+
+scriptPath=strcat("/tools/mgs/2021/aoi_cal_2021.2_28.15/shared/pkgs/icv.aoi/tools/queryskl")
+setSkillPath( cons(scriptPath getSkillPath() ) )
+)
+load( "calibre.skl" )
+;load  AutoSctratch on virtuoso start
+
+load("/CX_CAD/REL/env_scripts/projects/auto_scratch.il")

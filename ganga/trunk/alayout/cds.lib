@@ -1,0 +1,6 @@
+INCLUDE /CX_PROJ/E_PRJ/TSMC_40nm_ULP/SENSE_SEMI_P1/Scripts/Proj_setup/cds.lib
+#Removed by ddDeleteObj: DEFINE Dummy3P3 /CX_PROJ/E_PRJ/TSMC_40nm_ULP/SENSE_SEMI_P1/Alayout/users/kusuma/Dummy3P3
+#DEFINE CAD_LIB_FOR_TEST /CX_PROJ/E_PRJ/TSMC_40nm_ULP/SENSE_SEMI_P1//Alayout/users/cad/CAD_LIB_FOR_TEST
+DEFINE CAD_LIB_FOR_TEST /CX_CAD/REL/env_scripts/projects/ganga/alay_proj_scripts/CAD_LIB_FOR_TEST
+DEFINE CAD_LIB_FOR_TEST /CX_CAD/REL/env_scripts/projects/ganga/alay_proj_scripts/CAD_LIB_FOR_TEST
+

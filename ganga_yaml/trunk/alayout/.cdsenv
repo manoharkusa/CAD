@@ -1,0 +1,5 @@
+; Calibre run directory pattern (uses your SCRATCH_ROOT)
+envSetVal("calibre.env" "runDir" 'string "$SCRATCH_ROOT/calibre/%L/%C/%V")
+; Some environments use a different app name key—set both safely:
+envSetVal("calibre" "runDir" 'string "$SCRATCH_ROOT/calibre/%L/%C/%V")
+

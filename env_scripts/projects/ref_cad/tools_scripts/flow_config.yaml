@@ -1,0 +1,213 @@
+# Flow configuration - stage to tool/script mapping
+# Copy this to: {run_dir}/flow_config.yaml
+# Replace tool names and script names as needed for your setup
+
+# ============================================================
+# SLURM Defaults (can be overridden per stage)
+# ============================================================
+slurm_defaults:
+  enabled: false
+  partition: g12v1
+  cpus_per_task: 2
+  mem: 4G
+  srun_path: srun
+
+# ============================================================
+# Post-Processing Configuration (Unified Script)
+# ============================================================
+post_processing:
+  enabled: true
+  script: "{env_scripts}/parse_scripts/post_stage.py"
+
+# ============================================================
+# Stage Definitions
+# ============================================================
+stages:
+  syn:
+    tool: genus
+    script: genus_syn.tcl
+    timeout: 3600
+    description: Synthesis using Genus
+    complete_marker: synth_complete
+    slurm:
+      partition: g12v1
+      cpus_per_task: 2
+      mem: 4G
+
+  init_design:
+    tool: innovus
+    tool_args: "-stylus"
+    script: design_init.tcl
+    timeout: 1800
+    description: Design initialization
+    complete_marker: init_design_complete
+    stage_group: pnr
+    dir_name: init
+    slurm:
+      cpus_per_task: 2
+      mem: 4G
+
+  floorplan:
+    tool: innovus
+    tool_args: "-stylus"
+    script: floorplan.tcl
+    timeout: 1800
+    description: Floorplanning
+    complete_marker: floorplan_complete
+    stage_group: pnr
+    slurm:
+      cpus_per_task: 2
+      mem: 4G
+
+  place:
+    tool: innovus
+    tool_args: "-stylus"
+    script: place.tcl
+    timeout: 3600
+    description: Placement using Innovus
+    complete_marker: place_complete
+    stage_group: pnr
+    slurm:
+      cpus_per_task: 4
+      mem: 8G
+
+  cts:
+    tool: innovus
+    tool_args: "-stylus"
+    script: cts.tcl
+    timeout: 2400
+    description: Clock tree synthesis
+    complete_marker: cts_complete
+    stage_group: pnr
+    slurm:
+      cpus_per_task: 4
+      mem: 8G
+
+  post_cts:
+    tool: innovus
+    tool_args: "-stylus"
+    script: post_cts.tcl
+    timeout: 2400
+    description: Post-CTS optimization
+    complete_marker: postcts_complete
+    stage_group: pnr
+    dir_name: postcts
+    slurm:
+      cpus_per_task: 4
+      mem: 8G
+
+  route:
+    tool: innovus
+    tool_args: "-stylus"
+    script: route.tcl
+    timeout: 3600
+    description: Routing using Innovus
+    complete_marker: route_complete
+    stage_group: pnr
+    slurm:
+      cpus_per_task: 4
+      mem: 16G
+
+  postroute:
+    tool: innovus
+    tool_args: "-stylus"
+    script: post_route.tcl
+    timeout: 1800
+    description: Post-route optimization
+    complete_marker: post_route_complete
+    stage_group: pnr
+    slurm:
+      cpus_per_task: 4
+      mem: 8G
+
+  chip_finish:
+    tool: innovus
+    tool_args: "-stylus"
+    script: chip_finish.tcl
+    timeout: 1800
+    description: Chip finishing
+    complete_marker: chip_finish_complete
+    stage_group: pnr
+    slurm:
+      cpus_per_task: 2
+      mem: 8G
+
+  qrc:
+    tool: quantus
+    script: qrc.tcl
+    timeout: 1200
+    description: Quantus RC extraction
+    complete_marker: qrc_complete
+    dir_name: rcextraction
+    slurm:
+      cpus_per_task: 2
+      mem: 8G
+
+  sta:
+    tool: tempus
+    script: sta.tcl
+    timeout: 1200
+    description: Static timing analysis
+    complete_marker: sta_complete
+    slurm:
+      cpus_per_task: 2
+      mem: 4G
+
+  pv:
+    tool: calibre
+    script: pv.tcl
+    timeout: 1200
+    description: Physical verification (DRC/LVS)
+    complete_marker: pv_complete
+    slurm:
+      cpus_per_task: 4
+      mem: 8G
+
+  lec:
+    tool: conformal
+    script: lec.tcl
+    timeout: 1800
+    description: Logical equivalence check
+    complete_marker: lec_complete
+    slurm:
+      cpus_per_task: 2
+      mem: 4G
+
+# ============================================================
+# Stage Groups (for convenience)
+# ============================================================
+stage_groups:
+  pnr:
+    base_dir: pnr
+    stages:
+      - init_design
+      - floorplan
+      - place
+      - cts
+      - post_cts
+      - route
+      - postroute
+      - chip_finish
+
+  signoff:
+    stages:
+      - qrc
+      - sta
+      - pv
+      - lec
+
+  flow:
+    stages:
+      - syn
+      - init_design
+      - floorplan
+      - place
+      - cts
+      - post_cts
+      - route
+      - postroute
+      - chip_finish
+      - qrc
+      - sta
+      - pv
+      - lec
