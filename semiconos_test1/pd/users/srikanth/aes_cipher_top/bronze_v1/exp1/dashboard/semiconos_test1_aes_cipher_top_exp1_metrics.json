@@ -1,0 +1,100 @@
+{
+  "project": "semiconos_test1",
+  "block_name": "aes_cipher_top",
+  "experiment": "exp1",
+  "rtl_tag": "bronze_v1",
+  "run_directory": "/proj5/projects/semiconos_test1/pd/users/srikanth/aes_cipher_top/bronze_v1/exp1/dashboard",
+  "stages": {
+    "syn": {
+      "stage": "syn",
+      "timestamp": "2026-03-17 17:49:50",
+      "project": "semiconos_test1",
+      "block_name": "aes_cipher_top",
+      "experiment": "exp1",
+      "rtl_tag": "bronze_v1",
+      "user_name": "bharath",
+      "run_directory": "/proj5/projects/semiconos_test1/pd/users/srikanth/aes_cipher_top/bronze_v1/exp1/dashboard",
+      "stage_directory": "/proj5/projects/semiconos_test1/pd/users/srikanth/aes_cipher_top/bronze_v1/exp1/syn",
+      "internal_timing_r2r_wns": 9191.0,
+      "internal_timing_r2r_tns": 0.0,
+      "internal_timing_r2r_nvp": 0,
+      "interface_timing_i2r_wns": 7471.2,
+      "interface_timing_i2r_tns": 0.0,
+      "interface_timing_i2r_nvp": 0,
+      "interface_timing_r2o_wns": 7420.8,
+      "interface_timing_r2o_tns": 0.0,
+      "interface_timing_r2o_nvp": 0,
+      "interface_timing_i2o_wns": "N/A",
+      "interface_timing_i2o_tns": "N/A",
+      "interface_timing_i2o_nvp": "N/A",
+      "hold_wns": "N/A",
+      "hold_tns": "N/A",
+      "hold_nvp": "N/A",
+      "max_tran_wns": 0.0,
+      "max_tran_nvp": 0,
+      "max_cap_wns": 0.0,
+      "max_cap_nvp": 0,
+      "noise_violations": "N/A",
+      "min_pulse_width": "N/A",
+      "double_switching": "N/A",
+      "drc_violations": "N/A",
+      "metal_density_avg": "N/A",
+      "metal_density_max": "N/A",
+      "congestion_hotspot": "N/A",
+      "area": 1989.666,
+      "inst_count": 1623,
+      "utilization": "N/A",
+      "log_errors": 0,
+      "log_warnings": 0,
+      "log_critical": 0,
+      "run_status": "pass",
+      "runtime": "00:01:25",
+      "memory_usage": "1,027M",
+      "ai_summary": "",
+      "ir_static": "N/A",
+      "ir_dynamic": "N/A",
+      "em_power": "N/A",
+      "em_signal": "N/A",
+      "pv_drc_base": "N/A",
+      "pv_drc": "N/A",
+      "pv_drc_metal": "N/A",
+      "pv_drc_antenna": "N/A",
+      "lvs": "N/A",
+      "erc": "N/A",
+      "r2g_lec": "N/A",
+      "g2g_lec": "N/A",
+      "pv_antenna": "N/A",
+      "pv_erc": "N/A",
+      "pv_lvs": "N/A",
+      "setup_path_groups": {
+        "all": {
+          "wns": 7420.8,
+          "tns": 0.0,
+          "nvp": 0
+        },
+        "cg_enable_group_clk": {
+          "wns": 9294.1,
+          "tns": 0.0,
+          "nvp": 0
+        },
+        "in2reg": {
+          "wns": 7471.2,
+          "tns": 0.0,
+          "nvp": 0
+        },
+        "reg2out": {
+          "wns": 7420.8,
+          "tns": 0.0,
+          "nvp": 0
+        },
+        "reg2reg": {
+          "wns": 9191.0,
+          "tns": 0.0,
+          "nvp": 0
+        }
+      },
+      "setup_path_scen": {}
+    }
+  },
+  "last_updated": "2026-03-17 17:49:50"
+}

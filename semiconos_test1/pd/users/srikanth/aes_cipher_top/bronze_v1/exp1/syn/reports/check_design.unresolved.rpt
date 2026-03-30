@@ -1,0 +1,32 @@
+
+ 	 Check Design Report (c)
+	 ------------------- 
+
+  Unresolved References & Empty Modules
+  ------------------------------------- 
+design 'aes_cipher_top' has the following unresolved references
+hinst:aes_cipher_top/us33
+hinst:aes_cipher_top/us32
+hinst:aes_cipher_top/us31
+hinst:aes_cipher_top/us30
+hinst:aes_cipher_top/us23
+hinst:aes_cipher_top/us22
+hinst:aes_cipher_top/us21
+hinst:aes_cipher_top/us20
+hinst:aes_cipher_top/us13
+hinst:aes_cipher_top/us12
+hinst:aes_cipher_top/us11
+hinst:aes_cipher_top/us10
+hinst:aes_cipher_top/us03
+hinst:aes_cipher_top/us02
+hinst:aes_cipher_top/us01
+hinst:aes_cipher_top/us00
+hinst:aes_cipher_top/u0/u3
+hinst:aes_cipher_top/u0/u2
+hinst:aes_cipher_top/u0/u1
+hinst:aes_cipher_top/u0/u0
+Total number of unresolved references in design 'aes_cipher_top' : 20
+
+No empty modules in design 'aes_cipher_top'
+
+  Done Checking the design.

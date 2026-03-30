@@ -1,0 +1,598 @@
+
+ 	 Check Design Report (c)
+	 ------------------- 
+No subdesign's name is greater than 1.5k in length.
+
+ Feedthrough Module(s)
+ -------------------------
+No feed through module in 'aes_cipher_top'
+
+  Unresolved References & Empty Modules
+  ------------------------------------- 
+design 'aes_cipher_top' has the following unresolved references
+hinst:aes_cipher_top/us33
+hinst:aes_cipher_top/us32
+hinst:aes_cipher_top/us31
+hinst:aes_cipher_top/us30
+hinst:aes_cipher_top/us23
+hinst:aes_cipher_top/us22
+hinst:aes_cipher_top/us21
+hinst:aes_cipher_top/us20
+hinst:aes_cipher_top/us13
+hinst:aes_cipher_top/us12
+hinst:aes_cipher_top/us11
+hinst:aes_cipher_top/us10
+hinst:aes_cipher_top/us03
+hinst:aes_cipher_top/us02
+hinst:aes_cipher_top/us01
+hinst:aes_cipher_top/us00
+hinst:aes_cipher_top/u0/u3
+hinst:aes_cipher_top/u0/u2
+hinst:aes_cipher_top/u0/u1
+hinst:aes_cipher_top/u0/u0
+Total number of unresolved references in design 'aes_cipher_top' : 20
+
+No empty modules in design 'aes_cipher_top'
+
+ Unloaded Pin(s), Port(s)
+ -------------------------
+design 'aes_cipher_top' has the following unloaded sequential elements
+inst:aes_cipher_top/sa00_reg[0]
+inst:aes_cipher_top/sa00_reg[1]
+inst:aes_cipher_top/sa00_reg[2]
+inst:aes_cipher_top/sa00_reg[3]
+inst:aes_cipher_top/sa00_reg[4]
+inst:aes_cipher_top/sa00_reg[5]
+inst:aes_cipher_top/sa00_reg[6]
+inst:aes_cipher_top/sa00_reg[7]
+inst:aes_cipher_top/sa01_reg[0]
+inst:aes_cipher_top/sa01_reg[1]
+inst:aes_cipher_top/sa01_reg[2]
+inst:aes_cipher_top/sa01_reg[3]
+inst:aes_cipher_top/sa01_reg[4]
+inst:aes_cipher_top/sa01_reg[5]
+inst:aes_cipher_top/sa01_reg[6]
+inst:aes_cipher_top/sa01_reg[7]
+inst:aes_cipher_top/sa02_reg[0]
+inst:aes_cipher_top/sa02_reg[1]
+inst:aes_cipher_top/sa02_reg[2]
+inst:aes_cipher_top/sa02_reg[3]
+inst:aes_cipher_top/sa02_reg[4]
+inst:aes_cipher_top/sa02_reg[5]
+inst:aes_cipher_top/sa02_reg[6]
+inst:aes_cipher_top/sa02_reg[7]
+inst:aes_cipher_top/sa03_reg[0]
+inst:aes_cipher_top/sa03_reg[1]
+inst:aes_cipher_top/sa03_reg[2]
+inst:aes_cipher_top/sa03_reg[3]
+inst:aes_cipher_top/sa03_reg[4]
+inst:aes_cipher_top/sa03_reg[5]
+inst:aes_cipher_top/sa03_reg[6]
+inst:aes_cipher_top/sa03_reg[7]
+inst:aes_cipher_top/sa10_reg[0]
+inst:aes_cipher_top/sa10_reg[1]
+inst:aes_cipher_top/sa10_reg[2]
+inst:aes_cipher_top/sa10_reg[3]
+inst:aes_cipher_top/sa10_reg[4]
+inst:aes_cipher_top/sa10_reg[5]
+inst:aes_cipher_top/sa10_reg[6]
+inst:aes_cipher_top/sa10_reg[7]
+inst:aes_cipher_top/sa11_reg[0]
+inst:aes_cipher_top/sa11_reg[1]
+inst:aes_cipher_top/sa11_reg[2]
+inst:aes_cipher_top/sa11_reg[3]
+inst:aes_cipher_top/sa11_reg[4]
+inst:aes_cipher_top/sa11_reg[5]
+inst:aes_cipher_top/sa11_reg[6]
+inst:aes_cipher_top/sa11_reg[7]
+inst:aes_cipher_top/sa12_reg[0]
+inst:aes_cipher_top/sa12_reg[1]
+inst:aes_cipher_top/sa12_reg[2]
+inst:aes_cipher_top/sa12_reg[3]
+inst:aes_cipher_top/sa12_reg[4]
+inst:aes_cipher_top/sa12_reg[5]
+inst:aes_cipher_top/sa12_reg[6]
+inst:aes_cipher_top/sa12_reg[7]
+inst:aes_cipher_top/sa13_reg[0]
+inst:aes_cipher_top/sa13_reg[1]
+inst:aes_cipher_top/sa13_reg[2]
+inst:aes_cipher_top/sa13_reg[3]
+inst:aes_cipher_top/sa13_reg[4]
+inst:aes_cipher_top/sa13_reg[5]
+inst:aes_cipher_top/sa13_reg[6]
+inst:aes_cipher_top/sa13_reg[7]
+inst:aes_cipher_top/sa20_reg[0]
+inst:aes_cipher_top/sa20_reg[1]
+inst:aes_cipher_top/sa20_reg[2]
+inst:aes_cipher_top/sa20_reg[3]
+inst:aes_cipher_top/sa20_reg[4]
+inst:aes_cipher_top/sa20_reg[5]
+inst:aes_cipher_top/sa20_reg[6]
+inst:aes_cipher_top/sa20_reg[7]
+inst:aes_cipher_top/sa21_reg[0]
+inst:aes_cipher_top/sa21_reg[1]
+inst:aes_cipher_top/sa21_reg[2]
+inst:aes_cipher_top/sa21_reg[3]
+inst:aes_cipher_top/sa21_reg[4]
+inst:aes_cipher_top/sa21_reg[5]
+inst:aes_cipher_top/sa21_reg[6]
+inst:aes_cipher_top/sa21_reg[7]
+inst:aes_cipher_top/sa22_reg[0]
+inst:aes_cipher_top/sa22_reg[1]
+inst:aes_cipher_top/sa22_reg[2]
+inst:aes_cipher_top/sa22_reg[3]
+inst:aes_cipher_top/sa22_reg[4]
+inst:aes_cipher_top/sa22_reg[5]
+inst:aes_cipher_top/sa22_reg[6]
+inst:aes_cipher_top/sa22_reg[7]
+inst:aes_cipher_top/sa23_reg[0]
+inst:aes_cipher_top/sa23_reg[1]
+inst:aes_cipher_top/sa23_reg[2]
+inst:aes_cipher_top/sa23_reg[3]
+inst:aes_cipher_top/sa23_reg[4]
+inst:aes_cipher_top/sa23_reg[5]
+inst:aes_cipher_top/sa23_reg[6]
+inst:aes_cipher_top/sa23_reg[7]
+inst:aes_cipher_top/sa30_reg[0]
+inst:aes_cipher_top/sa30_reg[1]
+inst:aes_cipher_top/sa30_reg[2]
+inst:aes_cipher_top/sa30_reg[3]
+inst:aes_cipher_top/sa30_reg[4]
+inst:aes_cipher_top/sa30_reg[5]
+inst:aes_cipher_top/sa30_reg[6]
+inst:aes_cipher_top/sa30_reg[7]
+inst:aes_cipher_top/sa31_reg[0]
+inst:aes_cipher_top/sa31_reg[1]
+inst:aes_cipher_top/sa31_reg[2]
+inst:aes_cipher_top/sa31_reg[3]
+inst:aes_cipher_top/sa31_reg[4]
+inst:aes_cipher_top/sa31_reg[5]
+inst:aes_cipher_top/sa31_reg[6]
+inst:aes_cipher_top/sa31_reg[7]
+inst:aes_cipher_top/sa32_reg[0]
+inst:aes_cipher_top/sa32_reg[1]
+inst:aes_cipher_top/sa32_reg[2]
+inst:aes_cipher_top/sa32_reg[3]
+inst:aes_cipher_top/sa32_reg[4]
+inst:aes_cipher_top/sa32_reg[5]
+inst:aes_cipher_top/sa32_reg[6]
+inst:aes_cipher_top/sa32_reg[7]
+inst:aes_cipher_top/sa33_reg[0]
+inst:aes_cipher_top/sa33_reg[1]
+inst:aes_cipher_top/sa33_reg[2]
+inst:aes_cipher_top/sa33_reg[3]
+inst:aes_cipher_top/sa33_reg[4]
+inst:aes_cipher_top/sa33_reg[5]
+inst:aes_cipher_top/sa33_reg[6]
+inst:aes_cipher_top/sa33_reg[7]
+Total number of unloaded sequential elements in design 'aes_cipher_top' : 128
+
+No unloaded port in 'aes_cipher_top'
+
+ Unloaded Combinational Pin(s)
+ -------------------------------
+No unloaded combinational element in 'aes_cipher_top'
+
+ Assigns
+ ------- 
+Total number of assign statements in design 'aes_cipher_top' : 0
+
+ Undriven Port(s)/Pin(s)
+ ------------------------
+No undriven combinational pin in 'aes_cipher_top'
+
+No undriven sequential pin in 'aes_cipher_top'
+
+No undriven hierarchical pin in 'aes_cipher_top'
+
+No undriven port in 'aes_cipher_top'
+
+ Multidriven Port(s)/Pin(s)
+--------------------------
+
+The following combinational pin(s) in design 'aes_cipher_top' are multidriven
+pin:aes_cipher_top/g5574/in_0
+pin:aes_cipher_top/g5575/in_0
+pin:aes_cipher_top/g5623/in_0
+pin:aes_cipher_top/g5624/in_0
+pin:aes_cipher_top/g5692/in_0
+pin:aes_cipher_top/g5693/in_0
+pin:aes_cipher_top/g5722/in_0
+pin:aes_cipher_top/g5723/in_0
+pin:aes_cipher_top/g5878/in_0
+pin:aes_cipher_top/g5879/in_0
+pin:aes_cipher_top/g5887/in_0
+pin:aes_cipher_top/g5888/in_0
+pin:aes_cipher_top/g6004/in_0
+pin:aes_cipher_top/g6005/in_0
+pin:aes_cipher_top/g6064/in_0
+pin:aes_cipher_top/g6065/in_0
+pin:aes_cipher_top/g6082/in_0
+pin:aes_cipher_top/g6083/in_0
+pin:aes_cipher_top/g6103/in_0
+pin:aes_cipher_top/g6104/in_0
+pin:aes_cipher_top/g6109/in_0
+pin:aes_cipher_top/g6110/in_0
+pin:aes_cipher_top/g6154/in_0
+pin:aes_cipher_top/g6155/in_0
+pin:aes_cipher_top/g6169/in_0
+pin:aes_cipher_top/g6170/in_0
+pin:aes_cipher_top/g6214/in_0
+pin:aes_cipher_top/g6215/in_0
+pin:aes_cipher_top/g6226/in_0
+pin:aes_cipher_top/g6227/in_0
+pin:aes_cipher_top/g6250/in_0
+pin:aes_cipher_top/g6251/in_0
+pin:aes_cipher_top/g6253/in_0
+pin:aes_cipher_top/g6254/in_0
+pin:aes_cipher_top/g6256/in_0
+pin:aes_cipher_top/g6257/in_0
+pin:aes_cipher_top/g6259/in_0
+pin:aes_cipher_top/g6260/in_0
+pin:aes_cipher_top/g6262/in_0
+pin:aes_cipher_top/g6263/in_0
+pin:aes_cipher_top/g6268/in_0
+pin:aes_cipher_top/g6269/in_0
+pin:aes_cipher_top/g6271/in_0
+pin:aes_cipher_top/g6272/in_0
+pin:aes_cipher_top/g6274/in_0
+pin:aes_cipher_top/g6275/in_0
+pin:aes_cipher_top/g6283/in_0
+pin:aes_cipher_top/g6284/in_0
+pin:aes_cipher_top/g6286/in_0
+pin:aes_cipher_top/g6287/in_0
+pin:aes_cipher_top/g6292/in_0
+pin:aes_cipher_top/g6293/in_0
+pin:aes_cipher_top/g6298/in_0
+pin:aes_cipher_top/g6299/in_0
+pin:aes_cipher_top/g6301/in_0
+pin:aes_cipher_top/g6302/in_0
+pin:aes_cipher_top/g6304/in_0
+pin:aes_cipher_top/g6305/in_0
+pin:aes_cipher_top/g6307/in_0
+pin:aes_cipher_top/g6308/in_0
+pin:aes_cipher_top/g6310/in_0
+pin:aes_cipher_top/g6311/in_0
+pin:aes_cipher_top/g6313/in_0
+pin:aes_cipher_top/g6314/in_0
+pin:aes_cipher_top/g6316/in_0
+pin:aes_cipher_top/g6317/in_0
+pin:aes_cipher_top/g6331/in_0
+pin:aes_cipher_top/g6332/in_0
+pin:aes_cipher_top/g6337/in_0
+pin:aes_cipher_top/g6338/in_0
+pin:aes_cipher_top/g6352/in_0
+pin:aes_cipher_top/g6353/in_0
+pin:aes_cipher_top/g6361/in_0
+pin:aes_cipher_top/g6362/in_0
+pin:aes_cipher_top/g6370/in_0
+pin:aes_cipher_top/g6371/in_0
+pin:aes_cipher_top/g6379/in_0
+pin:aes_cipher_top/g6380/in_0
+pin:aes_cipher_top/g6382/in_0
+pin:aes_cipher_top/g6383/in_0
+pin:aes_cipher_top/g6385/in_0
+pin:aes_cipher_top/g6386/in_0
+pin:aes_cipher_top/g6391/in_0
+pin:aes_cipher_top/g6392/in_0
+pin:aes_cipher_top/g6394/in_0
+pin:aes_cipher_top/g6395/in_0
+pin:aes_cipher_top/g6400/in_0
+pin:aes_cipher_top/g6401/in_0
+pin:aes_cipher_top/g6406/in_0
+pin:aes_cipher_top/g6407/in_0
+pin:aes_cipher_top/g6412/in_0
+pin:aes_cipher_top/g6413/in_0
+pin:aes_cipher_top/g6424/in_0
+pin:aes_cipher_top/g6425/in_0
+pin:aes_cipher_top/g6436/in_0
+pin:aes_cipher_top/g6437/in_0
+pin:aes_cipher_top/g6442/in_0
+pin:aes_cipher_top/g6443/in_0
+pin:aes_cipher_top/g6451/in_0
+pin:aes_cipher_top/g6452/in_0
+pin:aes_cipher_top/g6460/in_0
+pin:aes_cipher_top/g6461/in_0
+pin:aes_cipher_top/g6463/in_0
+pin:aes_cipher_top/g6464/in_0
+pin:aes_cipher_top/g6469/in_0
+pin:aes_cipher_top/g6470/in_0
+pin:aes_cipher_top/g6475/in_0
+pin:aes_cipher_top/g6476/in_0
+pin:aes_cipher_top/g6481/in_0
+pin:aes_cipher_top/g6482/in_0
+pin:aes_cipher_top/g6496/in_0
+pin:aes_cipher_top/g6497/in_0
+pin:aes_cipher_top/g6502/in_0
+pin:aes_cipher_top/g6503/in_0
+pin:aes_cipher_top/g6514/in_0
+pin:aes_cipher_top/g6515/in_0
+pin:aes_cipher_top/g6517/in_0
+pin:aes_cipher_top/g6518/in_0
+pin:aes_cipher_top/g6523/in_0
+pin:aes_cipher_top/g6524/in_0
+pin:aes_cipher_top/g6532/in_0
+pin:aes_cipher_top/g6533/in_0
+pin:aes_cipher_top/g6541/in_0
+pin:aes_cipher_top/g6542/in_0
+pin:aes_cipher_top/g6551/in_0
+pin:aes_cipher_top/g6552/in_0
+pin:aes_cipher_top/g6561/in_0
+pin:aes_cipher_top/g6562/in_0
+pin:aes_cipher_top/g6636/in_0
+pin:aes_cipher_top/g6637/in_0
+pin:aes_cipher_top/g6639/in_0
+pin:aes_cipher_top/g6640/in_0
+pin:aes_cipher_top/g6642/in_0
+pin:aes_cipher_top/g6643/in_0
+pin:aes_cipher_top/g6645/in_0
+pin:aes_cipher_top/g6646/in_0
+pin:aes_cipher_top/g6648/in_0
+pin:aes_cipher_top/g6649/in_0
+pin:aes_cipher_top/g6651/in_0
+pin:aes_cipher_top/g6652/in_0
+pin:aes_cipher_top/g6654/in_0
+pin:aes_cipher_top/g6655/in_0
+pin:aes_cipher_top/g6657/in_0
+pin:aes_cipher_top/g6658/in_0
+pin:aes_cipher_top/g6732/in_0
+pin:aes_cipher_top/g6733/in_0
+pin:aes_cipher_top/g6735/in_0
+pin:aes_cipher_top/g6736/in_0
+pin:aes_cipher_top/g6738/in_0
+pin:aes_cipher_top/g6739/in_0
+pin:aes_cipher_top/g6741/in_0
+pin:aes_cipher_top/g6742/in_0
+pin:aes_cipher_top/g6744/in_0
+pin:aes_cipher_top/g6745/in_0
+pin:aes_cipher_top/g6747/in_0
+pin:aes_cipher_top/g6748/in_0
+pin:aes_cipher_top/g6750/in_0
+pin:aes_cipher_top/g6751/in_0
+pin:aes_cipher_top/g6753/in_0
+pin:aes_cipher_top/g6754/in_0
+pin:aes_cipher_top/g6828/in_0
+pin:aes_cipher_top/g6829/in_0
+pin:aes_cipher_top/g6831/in_0
+pin:aes_cipher_top/g6832/in_0
+pin:aes_cipher_top/g6834/in_0
+pin:aes_cipher_top/g6835/in_0
+pin:aes_cipher_top/g6837/in_0
+pin:aes_cipher_top/g6838/in_0
+pin:aes_cipher_top/g6840/in_0
+pin:aes_cipher_top/g6841/in_0
+pin:aes_cipher_top/g6843/in_0
+pin:aes_cipher_top/g6844/in_0
+pin:aes_cipher_top/g6846/in_0
+pin:aes_cipher_top/g6847/in_0
+pin:aes_cipher_top/g6849/in_0
+pin:aes_cipher_top/g6850/in_0
+pin:aes_cipher_top/g6924/in_0
+pin:aes_cipher_top/g6925/in_0
+pin:aes_cipher_top/g6927/in_0
+pin:aes_cipher_top/g6928/in_0
+pin:aes_cipher_top/g6930/in_0
+pin:aes_cipher_top/g6931/in_0
+pin:aes_cipher_top/g6933/in_0
+pin:aes_cipher_top/g6934/in_0
+pin:aes_cipher_top/g6936/in_0
+pin:aes_cipher_top/g6937/in_0
+pin:aes_cipher_top/g6939/in_0
+pin:aes_cipher_top/g6940/in_0
+pin:aes_cipher_top/g6942/in_0
+pin:aes_cipher_top/g6943/in_0
+pin:aes_cipher_top/g6945/in_0
+pin:aes_cipher_top/g6946/in_0
+pin:aes_cipher_top/u0/g1499/in_0
+pin:aes_cipher_top/u0/g1500/in_0
+pin:aes_cipher_top/u0/g1504/in_0
+pin:aes_cipher_top/u0/g1505/in_0
+pin:aes_cipher_top/u0/g1508/in_0
+pin:aes_cipher_top/u0/g1509/in_0
+pin:aes_cipher_top/u0/g1512/in_0
+pin:aes_cipher_top/u0/g1513/in_0
+pin:aes_cipher_top/u0/g1516/in_0
+pin:aes_cipher_top/u0/g1517/in_0
+pin:aes_cipher_top/u0/g1520/in_0
+pin:aes_cipher_top/u0/g1521/in_0
+pin:aes_cipher_top/u0/g1524/in_0
+pin:aes_cipher_top/u0/g1525/in_0
+pin:aes_cipher_top/u0/g1528/in_0
+pin:aes_cipher_top/u0/g1529/in_0
+pin:aes_cipher_top/u0/g1538/in_0
+pin:aes_cipher_top/u0/g1539/in_0
+pin:aes_cipher_top/u0/g1542/in_0
+pin:aes_cipher_top/u0/g1543/in_0
+pin:aes_cipher_top/u0/g1545/in_0
+pin:aes_cipher_top/u0/g1546/in_0
+pin:aes_cipher_top/u0/g1549/in_0
+pin:aes_cipher_top/u0/g1550/in_0
+pin:aes_cipher_top/u0/g1552/in_0
+pin:aes_cipher_top/u0/g1553/in_0
+pin:aes_cipher_top/u0/g1556/in_0
+pin:aes_cipher_top/u0/g1557/in_0
+pin:aes_cipher_top/u0/g1561/in_0
+pin:aes_cipher_top/u0/g1562/in_0
+pin:aes_cipher_top/u0/g1566/in_0
+pin:aes_cipher_top/u0/g1567/in_0
+pin:aes_cipher_top/u0/g1571/in_0
+pin:aes_cipher_top/u0/g1572/in_0
+pin:aes_cipher_top/u0/g1576/in_0
+pin:aes_cipher_top/u0/g1577/in_0
+pin:aes_cipher_top/u0/g1581/in_0
+pin:aes_cipher_top/u0/g1582/in_0
+pin:aes_cipher_top/u0/g1586/in_0
+pin:aes_cipher_top/u0/g1587/in_0
+pin:aes_cipher_top/u0/g1591/in_0
+pin:aes_cipher_top/u0/g1592/in_0
+pin:aes_cipher_top/u0/g1596/in_0
+pin:aes_cipher_top/u0/g1597/in_0
+pin:aes_cipher_top/u0/g1601/in_0
+pin:aes_cipher_top/u0/g1602/in_0
+pin:aes_cipher_top/u0/g1606/in_0
+pin:aes_cipher_top/u0/g1607/in_0
+pin:aes_cipher_top/u0/g1611/in_0
+pin:aes_cipher_top/u0/g1612/in_0
+pin:aes_cipher_top/u0/g1616/in_0
+pin:aes_cipher_top/u0/g1617/in_0
+pin:aes_cipher_top/u0/g1621/in_0
+pin:aes_cipher_top/u0/g1622/in_0
+pin:aes_cipher_top/u0/g1626/in_0
+pin:aes_cipher_top/u0/g1627/in_0
+pin:aes_cipher_top/u0/g1631/in_0
+pin:aes_cipher_top/u0/g1632/in_0
+pin:aes_cipher_top/u0/g1636/in_0
+pin:aes_cipher_top/u0/g1637/in_0
+pin:aes_cipher_top/u0/g1641/in_0
+pin:aes_cipher_top/u0/g1642/in_0
+pin:aes_cipher_top/u0/g1646/in_0
+pin:aes_cipher_top/u0/g1647/in_0
+Total number of combinational multidriven pin(s) in design 'aes_cipher_top' : 256
+
+No multidriven sequential pin in 'aes_cipher_top'
+
+No multidriven hierarchical pin in 'aes_cipher_top'
+
+No multidriven ports in 'aes_cipher_top'
+
+No multidriven unloaded nets in 'aes_cipher_top'
+
+  Constant Pin(s)
+  ----------------
+No constant combinational pin(s) in design 'aes_cipher_top'
+
+No constant sequential pin(s) in design 'aes_cipher_top'
+
+design 'aes_cipher_top' has the following constant input hierarchical pin(s)
+hpin:aes_cipher_top/RC_CG_HIER_INST0/test 	 (fanout : 1)
+hpin:aes_cipher_top/RC_CG_HIER_INST1/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST2/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST3/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST4/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST5/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST6/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST7/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST8/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST9/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST10/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST11/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST12/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST13/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST14/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST15/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST16/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST17/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST18/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST19/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST20/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST21/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST22/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST23/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST24/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST25/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST26/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST27/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST28/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST29/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST30/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST31/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST32/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/RC_CG_HIER_INST33/test 	 (fanout : 1)
+hpin:aes_cipher_top/u0/r0_RC_CG_HIER_INST34/test 	 (fanout : 1)
+Total number of constant hierarchical pins in design 'aes_cipher_top' : 35
+
+No constant connected ports in design 'aes_cipher_top'
+
+  Preserved instances(s)
+  ----------------
+No preserved combinational instance(s) in design 'aes_cipher_top'
+No preserved sequential instance(s) in design 'aes_cipher_top'
+No preserved hierarchical instance(s) in design 'aes_cipher_top'
+
+  Physical only instances(s)
+  ----------------
+No physical only instance(s) in design 'aes_cipher_top'
+
+  Logical only instance(s) and linked libcells
+    -----------------------------------------
+design 'aes_cipher_top' has following logical only instance(s)
+inst:aes_cipher_top/RC_CG_HIER_INST0/RC_CGIC_INST
+inst:aes_cipher_top/RC_CG_HIER_INST1/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST10/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST11/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST12/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST13/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST14/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST15/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST16/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST17/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST18/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST19/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST2/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST20/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST21/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST22/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST23/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST24/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST25/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST26/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST27/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST28/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST29/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST3/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST30/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST31/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST32/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST33/RC_CGIC_INST
+inst:aes_cipher_top/u0/r0_RC_CG_HIER_INST34/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST4/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST5/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST6/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST7/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST8/RC_CGIC_INST
+inst:aes_cipher_top/u0/RC_CG_HIER_INST9/RC_CGIC_INST
+Total number of logical only instances in design 'aes_cipher_top' : 35
+
+design 'aes_cipher_top' has the following logical only libcells linked to above instance(s)
+lib_cell:default_emulate_libset_max/tcbn28hpcplusbwp40p140ssg0p81vm40c/CKLNQD1BWP40P140
+
+Libcells with no corresponding LEF
+----------------------------------
+No libcell(s) found.
+
+LEF cells with no corresponding libcell
+---------------------------------------
+
+No physical (LEF) cells found.
+
+ Summary
+ ------- 
+
+              Name                       Total
+----------------------------------------------
+Unresolved References                       20
+Empty Modules                                0
+Unloaded Port(s)                             0
+Unloaded Sequential Pin(s)                 128
+Unloaded Combinational Pin(s)                0
+Assigns                                      0
+Undriven Port(s)                             0
+Undriven Leaf Pin(s)                         0
+Undriven hierarchical pin(s)                 0
+Multidriven Port(s)                          0
+Multidriven Leaf Pin(s)                    256
+Multidriven hierarchical Pin(s)              0
+Multidriven unloaded net(s)                  0
+Constant Port(s)                             0
+Constant Leaf Pin(s)                         0
+Constant hierarchical Pin(s)                35
+Preserved leaf instance(s)                   0
+Preserved hierarchical instance(s)           0
+Feedthrough Modules(s)                       0
+Libcells with no LEF cell                    0
+Physical (LEF) cells with no libcell         0
+Subdesigns with long module name             0
+Physical only instance(s)                    0
+Logical only instance(s)                    35
+
+  Done Checking the design.
