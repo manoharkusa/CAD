@@ -1,0 +1,16 @@
+create_clock -name clk1 -period 2.5 [get_ports PCLK]
+create_clock -name clk2 -period 2.5 [get_ports PCLKG]
+set_input_delay -clock clk1 [expr 2.5*0.6] [get_ports [remove_from_collection [all_inputs ] {PCLK PCLKG}]]
+set_output_delay -clock clk1 [expr 2.5*0.6] [get_ports [all_outputs ]]
+check_timing
+set_input_delay -clock clk2 -add_delay [expr 2.5*0.6] [get_ports [remove_from_collection [all_inputs ] {PCLK PCLKG}]]
+set_output_delay -clock clk2 -add_delay [expr 2.5*0.6] [get_ports [all_outputs ]]
+set_clock_uncertainty -setup [expr 2.5*0.2] [get_clocks clk1]
+set_clock_uncertainty -hold [expr 2.5*0.18] [get_clocks clk1]
+set_clock_uncertainty -setup [expr 2.5*0.2] [get_clocks clk2]
+set_clock_uncertainty -hold [expr 2.5*0.18] [get_clocks clk2]
+set_driving_cell -lib_cell BUFFD8BWP40P140HVT  [get_ports [remove_from_collection [all_inputs ] {PCLK PCLKG}]]
+set_load 0.00146193 [all_outputs]
+create_clock -name vir -period 2.5
+set_input_delay -clock vir [expr 2.5*0.35] [get_ports [filter_collection [all_fanin -to [all_outputs]] "port_direction==in" ]]
+set_output_delay -clock vir [expr 2.5*0.35] [get_ports [filter_collection [all_fanout -from [all_inputs]] "port_direction==out" ]]
