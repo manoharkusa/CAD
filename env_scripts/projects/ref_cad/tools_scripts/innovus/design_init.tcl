@@ -1,4 +1,6 @@
 source $env(ENV_SCRIPTS)/common/ui_common_procs.tcl
+source $env(ENV_SCRIPTS)/common/yaml_utils.tcl
+source $env(ENV_SCRIPTS)/common/pdk_loader.tcl
 
 set design_name $env(BLOCK_NAME)
 set input_netlist $env(EXP_DIR)/syn/outputs/${design_name}.v
@@ -8,7 +10,7 @@ set cur_stage_dir $env(EXP_DIR)/pnr/init
 set stage init_design
 ui_stage_start $stage
 ui_info "Design: $design_name"
-puts "MyInfo: Started $stage on $design_name @ [date]"
+ui_info "MyInfo: Started $stage on $design_name @ [date]"
 
 ##init_design step
 ui_status "Loading MMMC configuration"
@@ -16,12 +18,10 @@ read_mmmc  ${tool_scripts}/mmmc_config.tcl
 ui_info "MMMC configuration loaded"
 
 ui_status "Reading LEF files"
-read_physical -lef { \
-/proj1/projects/pd/projects_28nm/common_inputs/pnr_inputs/techlefs/tsmcn28_9lm4X2Y2RUTRDL.tlef \
-/proj1/pd/pdk/TSMC28HPHP/logic/tcbn28hpcplusbwp40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp40p140lvt_110a/lef/tcbn28hpcplusbwp40p140lvt.lef \
-/proj1/pd/pdk/TSMC28HPHP/logic/tcbn28hpcplusbwp40p140hvt_180a/AN61001_20180829/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp40p140hvt_110a/lef/tcbn28hpcplusbwp40p140hvt.lef \
-/proj1/pd/pdk/TSMC28HPHP/logic/tcbn28hpcplusbwp40p140_180b/AN61001_20180509/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp40p140_110a/lef/tcbn28hpcplusbwp40p140.lef \
-}
+set tech_lef [dict get $metal_cfg tech_lef]
+read_physical -lef [concat $tech_lef $CELL_LEFS]
+ui_info "Tech LEF  : $tech_lef"
+ui_info "Cell LEFs : $CELL_LEFS"
 ui_info "LEF files loaded"
 
 ##Netlist
@@ -29,8 +29,8 @@ ui_status "Reading netlist"
 read_netlist $input_netlist
 ui_info "Netlist loaded"
 
-set_db init_ground_nets {VSS}
-set_db init_power_nets {VDD}
+set_db init_ground_nets [dict get $PROJ_PDK ground_net]
+set_db init_power_nets [dict get $PROJ_PDK power_net]
 ui_status "Initializing design"
 init_design
 ui_info "Design initialized"
@@ -54,4 +54,5 @@ ui_status "Generating reports"
 source ${tool_scripts}/innovus_reports.tcl
 ui_info "Init design complete"
 ui_stage_end $stage "success"
+exec touch ${cur_stage_dir}/work/${stage}_flow_complete
 exit

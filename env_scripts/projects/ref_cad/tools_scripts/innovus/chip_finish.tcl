@@ -1,4 +1,6 @@
 source $env(ENV_SCRIPTS)/common/ui_common_procs.tcl
+source $env(ENV_SCRIPTS)/common/yaml_utils.tcl
+source $env(ENV_SCRIPTS)/common/pdk_loader.tcl
 
 set design_name $env(BLOCK_NAME)
 set tool_scripts $env(ENV_SCRIPTS)/innovus
@@ -31,18 +33,25 @@ ui_status "Writing LEF abstract"
 write_lef_abstract ${OUTDIR}/[get_db [current_design] .name]_abstract.lef
 
 ui_status "Writing GDS stream"
-write_stream ${OUTDIR}/[get_db [current_design] .name].pnr.gds.gz -map_file /proj1/dataIn/Rock_R2G/TSMC_28nm_collaterals/PDK/apr/PRTF_EDI_28nm_Cad_V19_1a/PR_tech/Cadence/GdsOutMap/gdsout_4X2Y2R.map -unit 1000
+write_stream ${OUTDIR}/[get_db [current_design] .name].pnr.gds.gz -map_file [dict get $metal_cfg gds_map_file innovus] -unit 1000
 ui_info "GDS stream written"
 
 ##hcell list (for LVS)
-if {[file exists ${OUTDIR}/hcell.list]} {[file delete ${OUTDIR}/hcell.list] }
+if {[file exists ${OUTDIR}/hcell.list]} {file delete ${OUTDIR}/hcell.list}
 foreach cl [lsort -unique [get_db insts .base_cell.name]] {puts "$cl $cl" >> ${OUTDIR}/hcell.list}
+
+if {[file exists ${OUTDIR}/cdl_files.list]} {file delete ${OUTDIR}/cdl_files.list}
+ui_info "Writing [llength $CELL_CDL] spice netlist to ${OUTDIR}/cdl_files.list"
+foreach cdl_file $CELL_CDL {puts "$cdl_file" >> ${OUTDIR}/cdl_files.list }
 
 ##To generate merged GDS
 ui_status "Generating merged GDS"
-write_stream ${OUTDIR}/[get_db [current_design] .name].merged.gds.gz -merge {/proj1/pd/pdk/TSMC28HPHP/logic/tcbn28hpcplusbwp40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Back_End/gds/tcbn28hpcplusbwp40p140lvt_110a/tcbn28hpcplusbwp40p140lvt.gds /proj1/pd/pdk/TSMC28HPHP/logic/tcbn28hpcplusbwp40p140_180b/AN61001_20180509/TSMCHOME/digital/Back_End/gds/tcbn28hpcplusbwp40p140_110a/tcbn28hpcplusbwp40p140.gds /proj1/pd/pdk/TSMC28HPHP/logic/tcbn28hpcplusbwp40p140hvt_180a/AN61001_20180829/TSMCHOME/digital/Back_End/gds/tcbn28hpcplusbwp40p140hvt_110a/tcbn28hpcplusbwp40p140hvt.gds} -map_file /proj1/dataIn/Rock_R2G/TSMC_28nm_collaterals/PDK/apr/PRTF_EDI_28nm_Cad_V19_1a/PR_tech/Cadence/GdsOutMap/gdsout_4X2Y2R.map -unit 1000
+write_stream ${OUTDIR}/[get_db [current_design] .name].merged.gds.gz -merge $CELL_GDS  -map_file [dict get $metal_cfg gds_map_file innovus] -unit 1000
 ui_info "Merged GDS generated"
+
+write_db -sdc ${cur_stage_dir}/outputs/${stage}.db
 
 ui_info "Chip finish complete"
 ui_stage_end $stage "success"
+exec touch ${cur_stage_dir}/work/${stage}_flow_complete
 exit

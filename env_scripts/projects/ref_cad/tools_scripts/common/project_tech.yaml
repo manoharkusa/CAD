@@ -1,0 +1,99 @@
+# =============================================================================
+# Project Technology Configuration
+# This file references all PDK component YAMLs
+# =============================================================================
+
+# Project Info
+project: aes_cipher_top
+technology: tsmc_28nm
+node: 28
+
+# Metal Stack (contains tech_lef, qrc, calibre decks)
+metal_stack: /proj1/pdk/foundries/tsmc/N28/versions/v1.0/metal_stack/1P9M_4X2Y2R/1P9M_4X2Y2R.yaml
+
+top_signal_routing_layer: 7
+bottom_signal_routing_layer: 1
+
+# Standard Cells (list of Vt flavor YAMLs)
+stdcells:
+  svt_9t: /proj1/pdk/foundries/tsmc/N28/versions/v1.0/stdcells/9T/svt/svt.yaml
+  hvt_9t: /proj1/pdk/foundries/tsmc/N28/versions/v1.0/stdcells/9T/hvt/hvt.yaml
+  lvt_9t: /proj1/pdk/foundries/tsmc/N28/versions/v1.0/stdcells/9T/lvt/lvt.yaml
+
+# Macros (list of IP/SRAM YAMLs available for this project)
+macros:
+        ct_f_spsram_512x44: /proj1/pdk/foundries/tsmc/N28/versions/v1.0/memory/configs/ct_f_spsram_512x44.yaml
+        ct_f_spsram_512x7: /proj1/pdk/foundries/tsmc/N28/versions/v1.0/memory/configs/ct_f_spsram_512x7.yaml
+        ct_f_spsram_1024x64: /proj1/pdk/foundries/tsmc/N28/versions/v1.0/memory/configs/ct_f_spsram_1024x64.yaml
+
+# Corner Definitions (maps corner name to lib_key and RC corner)
+
+# Options: timing_nldm_libs, timing_ccs_libs, timing_ecsm_libs
+timing_lib_format: timing_nldm_libs   
+
+# Options: timing_nldm_dbs, timing_ccs_dbs
+timing_db_format: timing_nldm_dbs   
+corners:
+  ss0p81v125c_rcw:
+    lib_pvt: ssg0p81v125c
+    temp: 125
+    rc: rcworst
+  ss0p81vm40_cw:
+    lib_pvt: ssg0p81vm40c
+    temp: -40
+    rc: cworst
+  ss0p81vm40_rcw:
+    lib_pvt: ssg0p81vm40c
+    temp: -40
+    rc: rcworst
+  ff0p99v125c_rcb:
+    lib_pvt: ffg0p99v125c
+    temp: 125
+    rc: rcbest
+  ff0p99v125c_cb:
+    lib_pvt: ffg0p99v125c
+    temp: 125
+    rc: cbest
+  ff0p99vm40_cb:
+    lib_pvt: ffg0p99vm40c
+    temp: -40
+    rc: cbest
+  tt0p9v25c_typ:
+    lib_pvt: tt0p9v25c
+    temp: 25
+    rc: typical
+
+
+# Stage wise corners
+synthesis_corners: ss0p81vm40_cw
+pnr_corners: ss0p81vm40_cw ss0p81v125c_rcw ff0p99v125c_rcb ff0p99vm40_cb
+signoff_corners: ss0p81vm40_cw ss0p81vm40_rcw ss0p81v125c_rcw ff0p99v125c_rcb ff0p99v125c_cb ff0p99vm40_cb tt0p9v25c_typ 
+ir_corners: ff0p99v125c_rcb
+em_corners: ff0p99v125c_rcb
+
+power_net: VDD
+ground_net: VSS
+
+# Endcap cells
+endcap_cells:
+        left: BOUNDARY_LEFTBWP40P140
+        right: BOUNDARY_RIGHTBWP40P140
+
+# Tap cell
+tap_cell: TAPCELLBWP40P140
+tap_distance: 30
+
+# Tie cells
+tie_high_cell: TIEHBWP40P140HVT
+tie_low_cell: TIELBWP40P140HVT
+
+# Clock attributes
+cts:
+        target_skew: 0.1
+        clock_tran_limit: 0.25
+        max_fanout: 16
+
+cts_buffers: CKBD4BWP40P140LVT CKBD8BWP40P140LVT CKBD12BWP40P140LVT CKBD16BWP40P140LVT
+cts_inverters: CKND4BWP40P140LVT CKND8BWP40P140LVT CKND12BWP40P140LVT CKND16BWP40P140LVT
+decap_fillers: DCAP64BWP40P140 DCAP64BWP40P140HVT DCAP64BWP40P140LVT DCAP32BWP40P140HVT DCAP16BWP40P140HVT DCAP8BWP40P140HVT DCAP4BWP40P140HVT
+plain_fillers: FILL32BWP40P140HVT FILL16BWP40P140HVT FILL8BWP40P140HVT FILL4BWP40P140HVT FILL3BWP40P140HVT FILL2BWP40P140HVT

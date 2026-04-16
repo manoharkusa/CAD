@@ -5,18 +5,18 @@ set TMPDIR /tmp
 set_distributed_hosts -local
 set_multi_cpu_usage -local_cpu 8
 
-set_db design_process_node  28
+set_db design_process_node  [dict get $PROJ_PDK node]
 set_db design_flow_effort   standard
 
-set_db route_design_bottom_routing_layer 1
-set_db route_design_top_routing_layer 7
+set_db design_bottom_routing_layer [dict get $PROJ_PDK bottom_signal_routing_layer]
+set_db design_top_routing_layer [dict get $PROJ_PDK top_signal_routing_layer]
 
 #To avoid 1x gap
 set_db place_detail_legalization_inst_gap 2
 set_db add_fillers_no_single_site_gap true
 
 ##To control cell density
-set_db place_global_max_density 0.6
+set_db place_global_max_density 0.7
 
 #To avoid 1x gap
 #set_db place_detail_legalization_inst_gap 2
@@ -32,7 +32,7 @@ if [regexp "route" $stage] {
   set_db extract_rc_engine            post_route
   set_db extract_rc_effort_level      high 
   set_db extract_rc_qrc_run_mode sequential
-  set_db route_design_process_node 28
+  set_db route_design_process_node [dict get $PROJ_PDK node]
   #set_glitch_threshold -pin_type all -failure_point {input} -glitch_type {both} -value 0.25
   set_db si_glitch_input_threshold 0.25
   set_db si_delay_enable_double_clocking_check true
@@ -42,7 +42,9 @@ if [regexp "route" $stage] {
 
 # Tieoff attributes  [get_db -category add_tieoffs]
 #-------------------------------------------------------------------------------
-set_db add_tieoffs_cells              {TIEHBWP40P140HVT TIELBWP40P140HVT}
+set tie_high_cell [dict get $PROJ_PDK tie_high_cell]
+set tie_low_cell [dict get $PROJ_PDK tie_low_cell]
+set_db add_tieoffs_cells              [list $tie_high_cell $tie_low_cell]
 
 # Optimization attributes  [get_db -category opt]
 #-------------------------------------------------------------------------------
@@ -50,12 +52,12 @@ set_db opt_new_inst_prefix            "PNR_${stage}_"
 
 # Clock attributes  [get_db -category cts]
 #-------------------------------------------------------------------------------
-set_db cts_target_skew                0.1
-set_db cts_target_max_transition_time 0.25
-set_db cts_max_fanout    16
+set_db cts_target_skew                [dict get $PROJ_PDK cts target_skew]
+set_db cts_target_max_transition_time [dict get $PROJ_PDK cts clock_tran_limit]
+set_db cts_max_fanout    [dict get $PROJ_PDK cts max_fanout]
 
-set_db cts_buffer_cells               {CKBD4BWP40P140LVT CKBD8BWP40P140LVT CKBD12BWP40P140LVT}
-set_db cts_inverter_cells             {CKND4BWP40P140LVT CKND8BWP40P140LVT CKND12BWP40P140LVT}
+set_db cts_buffer_cells  [dict get $PROJ_PDK cts_buffers] 
+set_db cts_inverter_cells [dict get $PROJ_PDK cts_inverters] 
 
 
 if {[get_db route_types] ne ""} {
@@ -67,5 +69,8 @@ if {[get_db route_types] ne ""} {
 ###Hold fix cells
 #set_db opt_hold_cells {gf180mcu_fd_sc_mcu7t5v0__dlya_1 gf180mcu_fd_sc_mcu7t5v0__dlya_2 gf180mcu_fd_sc_mcu7t5v0__dlya_4 gf180mcu_fd_sc_mcu7t5v0__dlyb_1 gf180mcu_fd_sc_mcu7t5v0__dlyb_2 gf180mcu_fd_sc_mcu7t5v0__dlyb_4 gf180mcu_fd_sc_mcu7t5v0__dlyc_1 gf180mcu_fd_sc_mcu7t5v0__dlyc_2 gf180mcu_fd_sc_mcu7t5v0__dlyc_4 gf180mcu_fd_sc_mcu7t5v0__dlyd_1 gf180mcu_fd_sc_mcu7t5v0__dlyd_2 gf180mcu_fd_sc_mcu7t5v0__dlyd_4 gf180mcu_fd_sc_mcu7t5v0__buf_1 gf180mcu_fd_sc_mcu7t5v0__buf_2 gf180mcu_fd_sc_mcu7t5v0__buf_3}
 
-set_db add_fillers_cells {DCAP64BWP40P140 DCAP64BWP40P140HVT DCAP64BWP40P140LVT DCAP32BWP40P140HVT DCAP16BWP40P140HVT DCAP8BWP40P140HVT DCAP4BWP40P140HVT FILL32BWP40P140HVT FILL16BWP40P140HVT FILL8BWP40P140HVT FILL4BWP40P140HVT FILL3BWP40P140HVT FILL2BWP40P140HVT}
+set dcap_filler_list [dict get $PROJ_PDK decap_fillers]
+set plain_filler_list [dict get $PROJ_PDK plain_fillers]
+
+set_db add_fillers_cells [concat $dcap_filler_list $plain_filler_list] 
 

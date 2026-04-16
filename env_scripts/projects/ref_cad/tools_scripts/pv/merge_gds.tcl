@@ -1,8 +1,8 @@
 ################Script to merge dummy fill GDS with design GDS
 ##Inputs, user to specify
-set feol_fill_gds ../feol_fill/outputs/TEST_BLOCK_FEOL.gds
-set beol_fill_gds ../beol_fill/outputs/TEST_BLOCK_BEOL.gds
-set out_gds ./outputs/TEST_BLOCK.merged_fill.gds.gz
+set feol_fill_gds ../../feol_fill/outputs/TEST_BLOCK_FEOL.gds
+set beol_fill_gds ../../beol_fill/outputs/TEST_BLOCK_BEOL.gds
+set out_gds ../outputs/TEST_BLOCK.merged_fill.gds.gz
 
 
 ##dont modify below

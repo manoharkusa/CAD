@@ -1,4 +1,6 @@
 source $env(ENV_SCRIPTS)/common/ui_common_procs.tcl
+source $env(ENV_SCRIPTS)/common/yaml_utils.tcl
+source $env(ENV_SCRIPTS)/common/pdk_loader.tcl
 
 set design_name $env(BLOCK_NAME)
 set tool_scripts $env(ENV_SCRIPTS)/innovus
@@ -66,4 +68,5 @@ ui_status "Generating routing reports"
 source ${tool_scripts}/innovus_reports.tcl
 ui_info "Routing complete"
 ui_stage_end $stage "success"
+exec touch ${cur_stage_dir}/work/${stage}_flow_complete
 exit

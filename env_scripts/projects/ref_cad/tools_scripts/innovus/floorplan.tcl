@@ -1,4 +1,6 @@
 source $env(ENV_SCRIPTS)/common/ui_common_procs.tcl
+source $env(ENV_SCRIPTS)/common/yaml_utils.tcl
+source $env(ENV_SCRIPTS)/common/pdk_loader.tcl
 
 set design_name $env(BLOCK_NAME)
 set tool_scripts $env(ENV_SCRIPTS)/innovus
@@ -28,7 +30,7 @@ if {[file exists $user_floorplan_file]} {
 } else {
     puts "MyInfo: No floorplan file exists $user_floorplan_file"
     ui_error "Floorplan file not found: $user_floorplan_file"
-    return
+    exit
 }
 
 source ${tool_scripts}/global_connections.tcl
@@ -76,8 +78,8 @@ ui_info "Power grid checks complete"
 
 ##physical only
 ui_status "Adding endcaps"
-set_db add_endcaps_left_edge BOUNDARY_RIGHTBWP40P140
-set_db add_endcaps_right_edge BOUNDARY_LEFTBWP40P140
+set_db add_endcaps_left_edge [dict get $PROJ_PDK endcap_cells right] 
+set_db add_endcaps_right_edge [dict get $PROJ_PDK endcap_cells left]
 ##User edits can be done in pre_add_endcaps.tcl
 if {[file exists $env(BLOCK_SCRIPTS)/pre_add_endcaps.tcl]} {
     source $env(BLOCK_SCRIPTS)/pre_add_endcaps.tcl
@@ -91,10 +93,10 @@ if {[file exists $env(BLOCK_SCRIPTS)/pre_add_well_taps.tcl]} {
 }
 
 ui_status "Adding well taps"
-add_well_taps -cell TAPCELLBWP40P140 -prefix Welltap -cell_interval 30 -checker_board
+add_well_taps -cell [dict get $PROJ_PDK tap_cell] -prefix Welltap -cell_interval [dict get $PROJ_PDK tap_distance] -checker_board
 ui_info "Well taps added"
 check_endcaps > $report_dir/check_endcap.rpt
-check_well_taps -max_distance 30 -cells TAPCELLBWP40P140 > $report_dir/check_welltaps.rpt
+check_well_taps -max_distance [dict get $PROJ_PDK tap_distance] -cells [dict get $PROJ_PDK tap_cell] > $report_dir/check_welltaps.rpt
 
 ##save database
 ui_status "Saving database"
@@ -125,4 +127,5 @@ ui_info "Floorplan reports generated"
 puts "MyInfo: End of $stage on $design_name @ [date]"
 ui_info "Floorplan complete"
 ui_stage_end $stage "success"
+exec touch ${cur_stage_dir}/work/${stage}_flow_complete
 exit

@@ -14,10 +14,17 @@ SYNTH_DIR := $(RUN_DIR)/syn
 GENUS_TCL := $(ENV_SCRIPTS)/genus/genus_syn.tcl
 
 # SLURM Parameters
+USE_SLURM      ?= 1
 PARTITION ?= g11v2 
 CPUS_PER_TASK ?= 2
 MEM ?= 4G
 SRUN ?= srun
+ifeq ($(USE_SLURM),1)
+SRUN_PREFIX = $(SRUN) -p $(PARTITION) --cpus-per-task=$(CPUS_PER_TASK) --mem=$(MEM) --pty
+else
+SRUN_PREFIX =
+endif
+
 
 TIMESTAMP := $(shell date +"%Y%m%d_%H%M%S")
 ifeq ($(ENABLE_AI),1)
@@ -36,7 +43,8 @@ clean:
 		       $(SYNTH_DIR)/reports/* \
 		       $(SYNTH_DIR)/outputs/* \
 		       $(SYNTH_DIR)/work/* 2>/dev/null || true; \
-		rm -f $(SYNTH_DIR)/synth_complete 2>/dev/null || true; \
+		rm -f $(SYNTH_DIR)/work/synth_complete $(SYNTH_DIR)/work/genus_flow_complete \
+		       $(RUN_DIR)/.makefile.lock $(RUN_DIR)/.orchestrator.lock 2>/dev/null || true; \
 		echo "Clean completed"; \
 	else \
 		echo "ERROR: $(SYNTH_DIR) does not exist"; \
@@ -49,24 +57,36 @@ clean:
 # -------------------------------------------------
 
 syn:
+	@if [ -f "$(RUN_DIR)/.orchestrator.lock" ]; then \
+		echo "ERROR: Orchestrator run is active for this block. Cannot run make directly."; \
+		echo "       Wait for the UI job to finish or abort it before using make."; \
+		cat "$(RUN_DIR)/.orchestrator.lock" 2>/dev/null; \
+		exit 1; \
+	fi
 	#tcsh -c "../source sourceproj.env"
-	@if [ -f "$(SYNTH_DIR)/synth_complete" ]; then \
-		echo "[SKIP] Synthesis already completed (remove $(SYNTH_DIR)/synth_complete to rerun)"; \
+	@if [ -f "$(SYNTH_DIR)/work/synth_complete" ]; then \
+		echo "[SKIP] Synthesis already completed (remove $(SYNTH_DIR)/work/synth_complete to rerun)"; \
 	else \
+		touch $(RUN_DIR)/.makefile.lock; \
 		echo "Starting synthesis for block: $(BLOCK_NAME)"; \
 		echo "Working directory : $(SYNTH_DIR)"; \
 		echo "Genus script      : $(GENUS_TCL)"; \
 		echo "SLURM             : partition=$(PARTITION), CPUs=$(CPUS_PER_TASK), MEM=$(MEM)"; \
 		cd $(SYNTH_DIR)/work && \
-			$(SRUN) -p $(PARTITION) \
-			        --cpus-per-task=$(CPUS_PER_TASK) \
-			        --mem=$(MEM) \
-				--pty genus -files $(GENUS_TCL) | tee ../logs/genus_syn_$(TIMESTAMP).log; \
-		python3 $(ENV_SCRIPTS)/parse_scripts/collect_metrics.py --stage syn --stage-dir $(SYNTH_DIR) --run-dir $(RUN_DIR)/dashboard $(AI_FLAG); \
-		python3 $(ENV_SCRIPTS)/parse_scripts/collect_qms.py --stage syn --stage-dir $(SYNTH_DIR) --run-dir $(RUN_DIR)/dashboard --runtag $(EXP_NAME) --block-name $(BLOCK_NAME) --project $(PROJ_NAME) --rtl-tag $(RTL_TAG); \
-		curl -X POST "http://$(PROJ_CURL_API_IP):3000/api/eda-files/external/upload" -H "X-API-Key: sitedafilesdata" -F "file=@$(RUN_DIR)/dashboard/$(PROJ_NAME)_$(BLOCK_NAME)_$(EXP_NAME)_metrics.json"; \
-                curl -X POST "http://$(PROJ_CURL_API_IP):3000/api/qms/external-checklists/upload-report" -H "X-API-Key: sitedafilesdata" -F "file=@$(RUN_DIR)/dashboard/$(EXP_NAME)_syn_qms.json"; \
-		touch $(SYNTH_DIR)/synth_complete; \
-		echo "Synthesis completed successfully"; \
+			$(SRUN_PREFIX) \
+			genus -files $(GENUS_TCL) | tee ../logs/syn.log; \
+		if [ -f "$(SYNTH_DIR)/work/genus_flow_complete" ]; then \
+			python3 $(ENV_SCRIPTS)/parse_scripts/collect_metrics.py --stage syn --stage-dir $(SYNTH_DIR) --run-dir $(RUN_DIR)/dashboard $(AI_FLAG); \
+			python3 $(ENV_SCRIPTS)/parse_scripts/collect_qms.py --stage syn --stage-dir $(SYNTH_DIR) --run-dir $(RUN_DIR)/dashboard --runtag $(EXP_NAME) --block-name $(BLOCK_NAME) --project $(PROJ_NAME) --rtl-tag $(RTL_TAG); \
+			curl -X POST "http://$(PROJ_CURL_API_IP):3000/api/eda-files/external/upload" -H "X-API-Key: sitedafilesdata" -F "file=@$(RUN_DIR)/dashboard/$(PROJ_NAME)_$(BLOCK_NAME)_$(EXP_NAME)_metrics.json"; \
+			curl -X POST "http://$(PROJ_CURL_API_IP):3000/api/qms/external-checklists/upload-report" -H "X-API-Key: sitedafilesdata" -F "file=@$(RUN_DIR)/dashboard/$(EXP_NAME)_syn_qms.json"; \
+			touch $(SYNTH_DIR)/work/synth_complete; \
+			rm -f $(RUN_DIR)/.makefile.lock; \
+			echo "Synthesis completed successfully"; \
+		else \
+			rm -f $(RUN_DIR)/.makefile.lock; \
+			echo "ERROR: genus flow did not complete. Skipping parse scripts."; \
+			exit 1; \
+		fi; \
 	fi
 

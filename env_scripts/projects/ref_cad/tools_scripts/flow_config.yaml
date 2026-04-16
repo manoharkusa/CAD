@@ -134,7 +134,8 @@ stages:
 
   qrc:
     tool: quantus
-    script: qrc.tcl
+    exec_mode: make
+    make_target: run_qrc
     timeout: 1200
     description: Quantus RC extraction
     complete_marker: qrc_complete
@@ -153,15 +154,112 @@ stages:
       cpus_per_task: 2
       mem: 4G
 
-  pv:
+  feol_fill:
     tool: calibre
-    script: pv.tcl
-    timeout: 1200
-    description: Physical verification (DRC/LVS)
-    complete_marker: pv_complete
+    exec_mode: make
+    make_target: feol_fill
+    stage_group: pv
+    timeout: 3600
+    description: FEOL fill generation
+    complete_marker: feol_fill_complete
+    depends_on:
+      - chip_finish
     slurm:
+      partition: g11v2
+      cpus_per_task: 2
+      mem: 4G
+
+  beol_fill:
+    tool: calibre
+    exec_mode: make
+    make_target: beol_fill
+    stage_group: pv
+    timeout: 3600
+    description: BEOL fill generation
+    complete_marker: beol_fill_complete
+    depends_on:
+      - chip_finish
+    slurm:
+      partition: g11v2
+      cpus_per_task: 2
+      mem: 4G
+
+  merge_fill:
+    tool: calibredrv
+    exec_mode: make
+    make_target: merge_fill
+    stage_group: pv
+    timeout: 3600
+    description: Merge FEOL and BEOL fill layers
+    complete_marker: merge_fill_complete
+    depends_on:
+      - feol_fill
+      - beol_fill
+    slurm:
+      partition: g11v2
       cpus_per_task: 4
       mem: 8G
+
+  run_calibre_drc:
+    tool: calibre
+    exec_mode: make
+    make_target: run_calibre_drc
+    stage_group: pv
+    timeout: 7200
+    description: Calibre DRC (design rule check)
+    complete_marker: run_calibre_drc_complete
+    depends_on:
+      - merge_fill
+    slurm:
+      partition: g11v2
+      cpus_per_task: 2
+      mem: 4G
+
+  run_antenna:
+    tool: calibre
+    exec_mode: make
+    make_target: run_antenna
+    stage_group: pv
+    timeout: 3600
+    description: Antenna rule check
+    complete_marker: run_antenna_complete
+    depends_on:
+      - merge_fill
+    slurm:
+      partition: g11v2
+      cpus_per_task: 2
+      mem: 4G
+
+  v2lvs:
+    tool: v2lvs
+    exec_mode: make
+    make_target: v2lvs
+    stage_group: pv
+    timeout: 1800
+    description: Verilog-to-LVS netlist conversion
+    complete_marker: v2lvs_complete
+    depends_on:
+      - chip_finish
+    slurm:
+      partition: g11v2
+      cpus_per_task: 2
+      mem: 4G
+
+  run_calibre_lvs:
+    tool: calibre
+    exec_mode: make
+    make_target: run_calibre_lvs
+    stage_group: pv
+    timeout: 7200
+    description: Calibre LVS (layout vs schematic)
+    complete_marker: run_calibre_lvs_complete
+    depends_on:
+      - merge_fill
+      - v2lvs
+    slurm:
+      partition: g11v2
+      cpus_per_task: 2
+      mem: 4G
 
   lec:
     tool: conformal
@@ -189,11 +287,29 @@ stage_groups:
       - postroute
       - chip_finish
 
+  pv:
+    base_dir: pv
+    makefile_dir: pv
+    stages:
+      - feol_fill
+      - beol_fill
+      - merge_fill
+      - run_calibre_drc
+      - run_antenna
+      - v2lvs
+      - run_calibre_lvs
+
   signoff:
     stages:
       - qrc
       - sta
-      - pv
+      - feol_fill
+      - beol_fill
+      - merge_fill
+      - run_calibre_drc
+      - run_antenna
+      - v2lvs
+      - run_calibre_lvs
       - lec
 
   flow:
@@ -209,5 +325,11 @@ stage_groups:
       - chip_finish
       - qrc
       - sta
-      - pv
+      - feol_fill
+      - beol_fill
+      - merge_fill
+      - run_calibre_drc
+      - run_antenna
+      - v2lvs
+      - run_calibre_lvs
       - lec

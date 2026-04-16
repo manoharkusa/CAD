@@ -1,4 +1,6 @@
 source $env(ENV_SCRIPTS)/common/ui_common_procs.tcl
+source $env(ENV_SCRIPTS)/common/yaml_utils.tcl
+source $env(ENV_SCRIPTS)/common/pdk_loader.tcl
 source $env(ENV_SCRIPTS)/genus/common_procs.tcl
 source $env(ENV_SCRIPTS)/genus/genus_common_settings.tcl
 
@@ -8,16 +10,25 @@ ui_info "Design: $design_name"
 
 set_db init_lib_search_path { }
 set_db init_hdl_search_path { }
+
 ui_status "Loading technology libraries"
-set_db library {/proj1/pd/pdk/TSMC28HPHP/logic/tcbn28hpcplusbwp40p140_180b/AN61001_20180509/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp40p140_180a/tcbn28hpcplusbwp40p140ssg0p81vm40c.lib /proj1/pd/pdk/TSMC28HPHP/logic/tcbn28hpcplusbwp40p140hvt_180a/AN61001_20180829/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp40p140hvt_180a/tcbn28hpcplusbwp40p140hvtssg0p81vm40c.lib /proj1/pd/pdk/TSMC28HPHP/logic/tcbn28hpcplusbwp40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp40p140lvt_180a/tcbn28hpcplusbwp40p140lvtssg0p81vm40c.lib}
-ui_info "Technology libraries loaded"
+set synthesis_view [dict get $PROJ_PDK synthesis_corners]
+set pvt_corner [dict get $PROJ_PDK corners $synthesis_view lib_pvt]
+set_db library $TIMING_LIBS($pvt_corner) 
+ui_info "Technology libraries loaded for $pvt_corner corner"
 
 set rtl_filelist $env(BLOCK_INPUTS)/${design_name}.rtl.f
-puts "MyInfo: Using rtl file list $rtl_filelist"
+if {[file exists $rtl_filelist]} {
+	ui_info "Using RTL file list $rtl_filelist"
+	ui_status "Reading RTL files"
+	read_hdl -f $rtl_filelist
+	ui_info "RTL files loaded"
+} else {
+	ui_error "FATAL RTL filelist missing @ $rtl_filelist, filelist is expected in $env(BLOCK_INPUTS) directory"
+        exit
+}	
 
-ui_status "Reading RTL files"
-read_hdl -f $rtl_filelist
-ui_info "RTL files loaded"
+
 
 set_db lp_insert_clock_gating true
 ##User edits can be done in pre_elab.tcl and post_elab.tcl
@@ -50,10 +61,15 @@ uniquify $design_name
 
 ##Read SDC
 set sdc_file $env(BLOCK_INPUTS)/${design_name}.sdc
-puts "MyInfo: Using SDC file : $sdc_file"
-ui_status "Reading SDC constraints"
-source -e -v $sdc_file
-ui_info "SDC constraints loaded"
+if {[file exists $sdc_file]} {
+	ui_info "Using SDC file : $sdc_file"
+	ui_status "Reading SDC constraints"
+	source -e -v $sdc_file
+	ui_info "SDC constraints loaded"
+} else {
+	ui_error "FATAL no sdc file @ $sdc_file"
+	exit
+}
 
 ui_status "Running timing and design checks"
 check_timing_intent > ../reports/check_timing.rpt
@@ -73,11 +89,13 @@ if {[file exists $env(BLOCK_SCRIPTS)/post_syn_map.tcl]} {
 
 check_design -unresolved > ../reports/check_design.unresolved.rpt
 
-##group_paths
-group_path -name in2reg -from [get_ports [remove_from_collection [all_inputs] clk]] -to [all_registers -data_pins]
-group_path -name reg2reg -from [all_registers -clock_pins] -to [all_registers -data_pins]
-group_path -name reg2out -from [all_registers -clock_pins] -to [all_outputs]
-group_path -name in2out -from [get_ports [remove_from_collection [all_inputs] clk]] -to [all_outputs]
+##Project default path groups
+source $env(ENV_SCRIPTS)/common/path_groups.default.tcl
+
+##User path groups
+if {[file exists $env(BLOCK_SCRIPTS)/path_groups.block.tcl]} {
+    source $env(BLOCK_SCRIPTS)/path_groups.block.tcl
+}
 
 ##User edits can be done in pre_syn_opt.tcl and post_syn_opt.tcl
 if {[file exists $env(BLOCK_SCRIPTS)/pre_syn_opt.tcl]} {
@@ -123,4 +141,5 @@ echo "RUNTIME: $runtime" >> ../reports/session_memory_usage_runtime.rpt
 report_messages
 ui_info "Synthesis complete"
 ui_stage_end "synthesis" "success"
+exec touch genus_flow_complete
 exit
