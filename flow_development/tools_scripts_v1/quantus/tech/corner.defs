@@ -1,0 +1,5 @@
+DEFINE cworst /proj1/dataIn/Rock_R2G/release_9_2_2021/qrc/cworst
+DEFINE rcworst /proj1/dataIn/Rock_R2G/release_9_2_2021/qrc/rcworst
+DEFINE rcbest /proj1/dataIn/Rock_R2G/release_9_2_2021/qrc/rcbest
+DEFINE cbest /proj1/dataIn/Rock_R2G/release_9_2_2021/qrc/cbest
+DEFINE typical /proj1/dataIn/Rock_R2G/release_9_2_2021/qrc/typical 

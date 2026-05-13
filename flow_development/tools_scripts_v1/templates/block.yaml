@@ -1,0 +1,47 @@
+#Agent_info: Added by SPD agent (create missing block.yaml configuration file) [2026-05-05 12:54:32]
+##Block hooks go here, turn on based on requirement
+
+#Agent_info: Added by SPD agent (uncomment required sections for YAML validation) [2026-05-05 15:49:30]
+# Required sections for project YAML validation
+metal_stack:
+  name: 1P9M_4X2Y2R
+  metal_layers: 9
+
+stdcells:
+  vt_types: [SVT, HVT, LVT]
+
+macros:
+  # Add memory macros here if needed
+  # example_sram:
+  #   type: memory
+  #   description: "Example SRAM description"
+
+corners:
+  typical: {}
+
+## Heir & top block control
+#is_hierarchical: true
+#design_with_io_pads: false
+
+## PnR flow controls
+#block_timing_critical: true
+#block_congestion_critical: true
+#design_dominant_complex_cells: true
+#place_max_density: 0.6
+
+#Agent_info: Added by SPD agent (fix routing layer configuration - set valid top/bottom layers) [2026-05-06 11:33:00]
+## Routing layer constraints
+route_design_top_routing_layer: 9
+route_design_bottom_routing_layer: 1
+
+#Agent_info: Updated by SPD agent (remove non-working post_hooks and create init_design_override.tcl) [2026-05-06 12:00:00]
+## Note: post_hooks not supported for init_design stage - using init_design_override.tcl instead
+
+
+## corner overrides (only use if different corners needed for block,
+#  but ensure this view info is part of corners section of project_tech.yaml file)
+#synthesis_corners: ss0p81v125c_rcw
+#pnr_corners: ss0p81vm40_cw ss0p81v125c_rcw ff0p99v125c_rcb ff0p99vm40_cb
+#signoff_corners: ss0p81vm40_cw ss0p81vm40_rcw ss0p81v125c_rcw ff0p99v125c_rcb ff0p99v125c_cb ff0p99vm40_cb tt0p9v25c_typ
+#ir_corners: ff0p99v125c_rcb
+#em_corners: ff0p99v125c_rcb

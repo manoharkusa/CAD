@@ -1,0 +1,337 @@
+# Flow configuration - stage to tool/script mapping
+# Copy this to: {run_dir}/flow_config.yaml
+# Replace tool names and script names as needed for your setup
+
+# ============================================================
+# SLURM Defaults (can be overridden per stage)
+# ============================================================
+slurm_defaults:
+  enabled: false
+  partition: g12v1
+  cpus_per_task: 2
+  mem: 4G
+  srun_path: srun
+
+# ============================================================
+# Post-Processing Configuration (Unified Script)
+# ============================================================
+post_processing:
+  enabled: true
+  script: "{env_scripts}/parse_scripts/post_stage.py"
+
+# ============================================================
+# Stage Definitions
+# ============================================================
+stages:
+  syn:
+    tool: genus
+    script: genus_syn.tcl
+    timeout: 3600
+    description: Synthesis using Genus
+    complete_marker: synth_complete
+    slurm:
+      partition: g12v1
+      cpus_per_task: 2
+      mem: 4G
+
+  init_design:
+    tool: innovus
+    tool_args: "-stylus"
+    script: design_init.tcl
+    timeout: 1800
+    description: Design initialization
+    complete_marker: init_design_complete
+    stage_group: pnr
+    dir_name: init
+    slurm:
+      cpus_per_task: 2
+      mem: 4G
+
+  floorplan:
+    tool: innovus
+    tool_args: "-stylus"
+    script: floorplan.tcl
+    timeout: 1800
+    description: Floorplanning
+    complete_marker: floorplan_complete
+    stage_group: pnr
+    slurm:
+      cpus_per_task: 2
+      mem: 4G
+
+  place:
+    tool: innovus
+    tool_args: "-stylus"
+    script: place.tcl
+    timeout: 3600
+    description: Placement using Innovus
+    complete_marker: place_complete
+    stage_group: pnr
+    slurm:
+      cpus_per_task: 4
+      mem: 8G
+
+  cts:
+    tool: innovus
+    tool_args: "-stylus"
+    script: cts.tcl
+    timeout: 2400
+    description: Clock tree synthesis
+    complete_marker: cts_complete
+    stage_group: pnr
+    slurm:
+      cpus_per_task: 4
+      mem: 8G
+
+  post_cts:
+    tool: innovus
+    tool_args: "-stylus"
+    script: post_cts.tcl
+    timeout: 2400
+    description: Post-CTS optimization
+    complete_marker: postcts_complete
+    stage_group: pnr
+    dir_name: postcts
+    slurm:
+      cpus_per_task: 4
+      mem: 8G
+
+  route:
+    tool: innovus
+    tool_args: "-stylus"
+    script: route.tcl
+    timeout: 3600
+    description: Routing using Innovus
+    complete_marker: route_complete
+    stage_group: pnr
+    slurm:
+      cpus_per_task: 4
+      mem: 16G
+
+  postroute:
+    tool: innovus
+    tool_args: "-stylus"
+    script: post_route.tcl
+    timeout: 1800
+    description: Post-route optimization
+    complete_marker: post_route_complete
+    stage_group: pnr
+    slurm:
+      cpus_per_task: 4
+      mem: 8G
+
+  chip_finish:
+    tool: innovus
+    tool_args: "-stylus"
+    script: chip_finish.tcl
+    timeout: 1800
+    description: Chip finishing
+    complete_marker: chip_finish_complete
+    stage_group: pnr
+    slurm:
+      cpus_per_task: 2
+      mem: 8G
+
+  qrc:
+    tool: quantus
+    exec_mode: make
+    make_target: run_qrc
+    timeout: 1200
+    description: Quantus RC extraction
+    complete_marker: qrc_complete
+    dir_name: rcextraction
+    slurm:
+      cpus_per_task: 2
+      mem: 8G
+
+  sta:
+    tool: tempus
+    tool_args: "-stylus"
+    script: tempus.tcl
+    timeout: 1200
+    description: Static timing analysis
+    complete_marker: sta_complete
+    dir_name: sta
+    slurm:
+      cpus_per_task: 2
+      mem: 4G
+
+  feol_fill:
+    tool: calibre
+    exec_mode: make
+    make_target: feol_fill
+    stage_group: pv
+    timeout: 3600
+    description: FEOL fill generation
+    complete_marker: feol_fill_complete
+    depends_on:
+      - chip_finish
+    slurm:
+      partition: g11v2
+      cpus_per_task: 2
+      mem: 4G
+
+  beol_fill:
+    tool: calibre
+    exec_mode: make
+    make_target: beol_fill
+    stage_group: pv
+    timeout: 3600
+    description: BEOL fill generation
+    complete_marker: beol_fill_complete
+    depends_on:
+      - chip_finish
+    slurm:
+      partition: g11v2
+      cpus_per_task: 2
+      mem: 4G
+
+  merge_fill:
+    tool: calibredrv
+    exec_mode: make
+    make_target: merge_fill
+    stage_group: pv
+    timeout: 3600
+    description: Merge FEOL and BEOL fill layers
+    complete_marker: merge_fill_complete
+    depends_on:
+      - feol_fill
+      - beol_fill
+    slurm:
+      partition: g11v2
+      cpus_per_task: 4
+      mem: 8G
+
+  run_calibre_drc:
+    tool: calibre
+    exec_mode: make
+    make_target: run_calibre_drc
+    stage_group: pv
+    timeout: 7200
+    description: Calibre DRC (design rule check)
+    complete_marker: run_calibre_drc_complete
+    depends_on:
+      - merge_fill
+    slurm:
+      partition: g11v2
+      cpus_per_task: 2
+      mem: 4G
+
+  run_antenna:
+    tool: calibre
+    exec_mode: make
+    make_target: run_antenna
+    stage_group: pv
+    timeout: 3600
+    description: Antenna rule check
+    complete_marker: run_antenna_complete
+    depends_on:
+      - merge_fill
+    slurm:
+      partition: g11v2
+      cpus_per_task: 2
+      mem: 4G
+
+  v2lvs:
+    tool: v2lvs
+    exec_mode: make
+    make_target: v2lvs
+    stage_group: pv
+    timeout: 1800
+    description: Verilog-to-LVS netlist conversion
+    complete_marker: v2lvs_complete
+    depends_on:
+      - chip_finish
+    slurm:
+      partition: g11v2
+      cpus_per_task: 2
+      mem: 4G
+
+  run_calibre_lvs:
+    tool: calibre
+    exec_mode: make
+    make_target: run_calibre_lvs
+    stage_group: pv
+    timeout: 7200
+    description: Calibre LVS (layout vs schematic)
+    complete_marker: run_calibre_lvs_complete
+    depends_on:
+      - merge_fill
+      - v2lvs
+    slurm:
+      partition: g11v2
+      cpus_per_task: 2
+      mem: 4G
+
+  lec:
+    tool: conformal
+    script: lec.tcl
+    timeout: 1800
+    description: Logical equivalence check
+    complete_marker: lec_complete
+    slurm:
+      cpus_per_task: 2
+      mem: 4G
+
+# ============================================================
+# Stage Groups (for convenience)
+# ============================================================
+stage_groups:
+  pnr:
+    base_dir: pnr
+    stages:
+      - init_design
+      - floorplan
+      - place
+      - cts
+      - post_cts
+      - route
+      - postroute
+      - chip_finish
+
+  pv:
+    base_dir: pv
+    makefile_dir: pv
+    stages:
+      - feol_fill
+      - beol_fill
+      - merge_fill
+      - run_calibre_drc
+      - run_antenna
+      - v2lvs
+      - run_calibre_lvs
+
+  signoff:
+    stages:
+      - qrc
+      - sta
+      - feol_fill
+      - beol_fill
+      - merge_fill
+      - run_calibre_drc
+      - run_antenna
+      - v2lvs
+      - run_calibre_lvs
+      - lec
+
+  flow:
+    stages:
+      - syn
+      - init_design
+      - floorplan
+      - place
+      - cts
+      - post_cts
+      - route
+      - postroute
+      - chip_finish
+      - qrc
+      - sta
+      - feol_fill
+      - beol_fill
+      - merge_fill
+      - run_calibre_drc
+      - run_antenna
+      - v2lvs
+      - run_calibre_lvs
+      - lec
